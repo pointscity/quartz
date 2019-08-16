@@ -9,14 +9,14 @@ class CommandHandler {
     this._quartz = quartz
     this.directory = options.directory || './commands'
     this.debug = options.debug || false
-    this.prefix = options.prefix || 'p!'
+    this._prefix = options.prefix || '!'
     this.defaultCooldown = options.defaultCooldown || 10000
     this.commands = new Collection()
     this.modules = new Collection()
     this.aliases = new Collection()
-    this._text = options.text
-    this._logo = options.logo
-    this._color = options.color
+    this._text = options.text || 'Quartz'
+    this._logo = options.logo || ''
+    this._color = options.color || 0xFFFFFF
   }
 
   get quartz () {
@@ -112,6 +112,11 @@ class CommandHandler {
     else return this._color(msg)
   }
 
+  async prefix (msg) {
+    if (typeof this.color !== 'function') return this._prefix
+    else return this._prefix(msg)
+  }
+
   async embed (message, options = {}) {
     const embed = new Embed()
     if (options.reply && !options.bold) embed.description(`<@${this.data.author.id}>, ${message}`)
@@ -127,13 +132,12 @@ class CommandHandler {
 
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot) return
-    if (!msg.channel.guild) return
     msg.command = false
-    const getPrefix = await this.client.prefix.get(msg.channel.guild.id)
+    const prefix = await this.prefix(msg)
     const lowerCaseMessage = msg.content.toLowerCase()
-    if (!lowerCaseMessage.startsWith(getPrefix.toLowerCase() || this.prefix.toLowerCase())) return
+    if (!lowerCaseMessage.startsWith(prefix.toLowerCase() || this.prefix.toLowerCase())) return
     msg.content = msg.content.replace(/<@!/g, '<@')
-    msg.prefix = getPrefix.toLowerCase() || this.prefix.toLowerCase()
+    msg.prefix = prefix.toLowerCase() || this.prefix.toLowerCase()
     const args = msg.content.substring(msg.prefix.length).split(' ')
     const label = args.shift().toLowerCase()
     const command = await this.getCommand(label)
