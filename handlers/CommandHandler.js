@@ -171,7 +171,6 @@ class CommandHandler {
         this.quartz.emit('commandRun', { msg, command })
       })
       .catch(error => {
-        console.log(error)
         throw new QuartzError('UNKNOWN', error)
       })
   }

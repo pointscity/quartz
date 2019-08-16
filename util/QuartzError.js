@@ -12,7 +12,8 @@ const Messages = {
   MODULE_NOT_FOUND: (constructor, id) => `${constructor} '${id}' does not exist`,
   NOT_IMPLEMENTED: (constructor, method) => `${constructor}#${method} has not been implemented`,
   UNKNOWN: error => error,
-  INVALID_CLASS_TO_HANDLE: (given, expected) => `Class to handle ${given} is not a subclass of ${expected}`
+  INVALID_CLASS_TO_HANDLE: (given, expected) => `Class to handle ${given} is not a subclass of ${expected}`,
+  CLIENT_FAILED_TO_START: error => error
 }
 
 class QuartzError extends Error {
@@ -27,7 +28,7 @@ class QuartzError extends Error {
   }
 
   get name () {
-    return `PointsError [${this.code}]`
+    return `QuartzError [${this.code}]`
   }
 }
 

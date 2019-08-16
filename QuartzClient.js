@@ -3,6 +3,7 @@ const EventEmitter = require('eventemitter3')
 const EventHandler = require('./handlers/EventHandler')
 const CommandHandler = require('./handlers/CommandHandler')
 const Embed = require('./structures/Embed')
+const QuartzError = require('./util/QuartzError')
 
 class QuartzClient extends EventEmitter {
   constructor (options = {}, eris) {
@@ -15,6 +16,7 @@ class QuartzClient extends EventEmitter {
     this._client.embed = () => new Embed()
     this._client.commandHandler = this.commandHandler
     this._client.eventHandler = this.eventHandler
+    this._client.logger = this.logger
   }
 
   get client () {
@@ -22,18 +24,12 @@ class QuartzClient extends EventEmitter {
   }
 
   async start () {
-    await this.logger.info('Loading...')
     await this.eventHandler.loadEvents()
     await this.commandHandler.loadCommands()
-    this._client.connect().then(async () => {
-      this.logger.info('=== PointsClient Connected! ===')
+    this._client.connect().catch(error => {
+      throw new QuartzError('CLIENT_FAILED_TO_START', error)
     })
-    this._client.once('ready', this._onReady.bind(this))
     this._client.on('messageCreate', this.commandHandler._onMessageCreate.bind(this.commandHandler))
-  }
-
-  async _onReady () {
-    this.logger.info('=== PointsClient Ready! ===')
   }
 }
 module.exports = QuartzClient
