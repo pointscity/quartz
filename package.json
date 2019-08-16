@@ -9,6 +9,7 @@
   "repository": "https://gitlab.com/PointsCity/quartz",
   "peerDependencies": {
     "chalk": "^2.4.2",
-    "eris": "^0.10.1"
+    "eris": "^0.10.1",
+    "eventemitter3": "^4.0.0"
   }
 }
