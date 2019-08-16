@@ -6,6 +6,7 @@
   "author": "Adam <adam@atiktech.co>",
   "license": "MIT",
   "private": true,
+  "repository": "https://gitlab.com/PointsCity/quartz",
   "peerDependencies": {
     "eris": "^0.10.1"
   }
