@@ -98,22 +98,22 @@ class CommandHandler {
   }
 
   async text (msg) {
-    if (typeof this.text !== 'function') return this._text
+    if (typeof this._text !== 'function') return this._text
     else return this._text(msg)
   }
 
   async logo (msg) {
-    if (typeof this.logo !== 'function') return this._logo
+    if (typeof this._logo !== 'function') return this._logo
     else return this._logo(msg)
   }
 
   async color (msg) {
-    if (typeof this.color !== 'function') return this._color
+    if (typeof this._color !== 'function') return this._color
     else return this._color(msg)
   }
 
   async prefix (msg) {
-    if (typeof this.color !== 'function') return this._prefix
+    if (typeof this._prefix !== 'function') return this._prefix
     else return this._prefix(msg)
   }
 
