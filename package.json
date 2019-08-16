@@ -1,0 +1,12 @@
+{
+  "name": "quartz",
+  "version": "1.0.0",
+  "description": "The heart of Points",
+  "main": "index.js",
+  "author": "Adam <adam@atiktech.co>",
+  "license": "MIT",
+  "private": true,
+  "peerDependencies": {
+    "eris": "^0.10.1"
+  }
+}
