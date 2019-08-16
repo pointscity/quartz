@@ -148,7 +148,7 @@ class CommandHandler {
     msg.logo = this.logo.bind(this, msg)
     msg.text = this.text.bind(this, msg)
     if (command.guildOnly && !msg.channel.guild) return
-    if (msg.channel.guild) msg.guild = msg.channnl.guild
+    if (msg.channel.guild) msg.guild = msg.channel.guild
     if (command.ownerOnly && msg.author.id !== this.client.config.ownerID) return
     if (process.env.NODE_ENV !== 'development' && command.devOnly && msg.author.id !== this.client.config.ownerID) return this.client.embeds.embed(msg, `<@${msg.author.id}>, **Currently Unavailable:** The bot is currently unavailable.`)
     if (command.userPermissions) {
