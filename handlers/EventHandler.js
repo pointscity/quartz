@@ -30,8 +30,25 @@ class EventHandler {
       if (this.events.get(evt.name)) throw new QuartzError('EVT_ALREADY_EXISTS', evt.name)
       this.events.set(evt.name, evt)
       if (this.debug) this.quartz.logger.info(`Loading event ${evt.name}`)
-      this.client.on(evt.name, evt.run.bind(this))
+      if (evt.name === 'messageCreate') this.client.on(evt.name, this._onMessageCreate.bind(this))
+      else this.client.on(evt.name, evt.run.bind(this))
     })
+  }
+
+  async _onMessageCreate (msg) {
+    if (!msg.author || msg.author.bot) return
+    msg.command = false
+    const prefix = await this.client.commandHandler.prefix(msg)
+    const lowerCaseMessage = msg.content.toLowerCase()
+    if (!lowerCaseMessage.startsWith(prefix.toLowerCase() || this.prefix.toLowerCase())) return
+    msg.content = msg.content.replace(/<@!/g, '<@')
+    msg.prefix = prefix.toLowerCase() || this.prefix.toLowerCase()
+    const args = msg.content.substring(msg.prefix.length).split(' ')
+    const label = args.shift().toLowerCase()
+    const command = await this.getCommand(label)
+    if (command) msg.command = command
+    const event = this.events.get('messageCreate')
+    return event.run.call(this, msg)
   }
 }
 module.exports = EventHandler
