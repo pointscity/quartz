@@ -40,12 +40,11 @@ class EventHandler {
     msg.command = false
     const prefix = await this.client.commandHandler.prefix(msg)
     const lowerCaseMessage = msg.content.toLowerCase()
-    if (!lowerCaseMessage.startsWith(prefix.toLowerCase() || this.prefix.toLowerCase())) return
+    if (lowerCaseMessage.startsWith(prefix.toLowerCase())) msg.prefix = prefix.toLowerCase()
     msg.content = msg.content.replace(/<@!/g, '<@')
-    msg.prefix = prefix.toLowerCase() || this.prefix.toLowerCase()
     const args = msg.content.substring(msg.prefix.length).split(' ')
     const label = args.shift().toLowerCase()
-    const command = await this.getCommand(label)
+    const command = await this.client.commandHandler.getCommand(label)
     if (command) msg.command = command
     const event = this.events.get('messageCreate')
     return event.run.call(this, msg)

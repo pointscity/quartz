@@ -132,10 +132,9 @@ class CommandHandler {
 
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot) return
-    msg.command = false
     const prefix = await this.prefix(msg)
     const lowerCaseMessage = msg.content.toLowerCase()
-    if (!lowerCaseMessage.startsWith(prefix.toLowerCase() || this.prefix.toLowerCase())) return
+    if (!lowerCaseMessage.startsWith(prefix.toLowerCase())) return
     msg.content = msg.content.replace(/<@!/g, '<@')
     msg.prefix = prefix.toLowerCase() || this.prefix.toLowerCase()
     const args = msg.content.substring(msg.prefix.length).split(' ')
