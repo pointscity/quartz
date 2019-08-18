@@ -119,15 +119,15 @@ class CommandHandler {
 
   async embed (message, options = {}) {
     const embed = new Embed()
-    if (options.reply && !options.bold) embed.description(`<@${this.data.author.id}>, ${message}`)
+    if (options.reply && !options.bold) embed.description(`<@${this.author.id}>, ${message}`)
     else if (options.bold && !options.reply) embed.description(`**${message}**`)
-    else if (options.bold && options.reply) embed.description(`**<@${this.data.author.id}>, ${message}**`)
+    else if (options.bold && options.reply) embed.description(`**<@${this.author.id}>, ${message}**`)
     else embed.description(message)
     if (options.premium) embed.color(this.client.config.embed.premium.color)
     else if (options.color) embed.color(options.color)
     else embed.color(await this.color())
     if (options.footer) embed.footer(await this.text(), await this.logo())
-    return this.msg.channel.createMessage({ embed: embed })
+    return this.channel.createMessage({ embed: embed })
   }
 
   async _onMessageCreate (msg) {
