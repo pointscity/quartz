@@ -125,19 +125,41 @@ class CommandHandler {
     else embed.description(message)
     if (options.premium) embed.color(this.client.config.embed.premium.color)
     else if (options.color) embed.color(options.color)
-    else embed.color(await this.color())
+    else embed.color(+await this.color())
     if (options.footer) embed.footer(await this.text(), await this.logo())
     return this.channel.createMessage({ embed: embed })
+  }
+
+  async _resolvePrefix (prefixes, msg) {
+    let resolvedPrefix
+    await prefixes.forEach(p => {
+      const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(p.toLowerCase())})\\s*`)
+      if (!prefixRegex.test(msg.content.toLowerCase())) return undefined
+      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
+      if (!matchedPrefix) return undefined
+      resolvedPrefix = matchedPrefix
+    })
+    return resolvedPrefix
   }
 
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot) return
     const prefix = await this.prefix(msg)
-    const lowerCaseMessage = msg.content.toLowerCase()
-    if (!lowerCaseMessage.startsWith(prefix.toLowerCase())) return
+    const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (Array.isArray(prefix)) {
+      const matchedPrefix = await this._resolvePrefix(prefix, msg)
+      msg.prefix = matchedPrefix
+    } else {
+      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(prefix.toLowerCase())})\\s*`)
+      if (!prefixRegex.test(msg.content.toLowerCase())) return
+      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
+      if (!matchedPrefix) return
+      msg.prefix = matchedPrefix
+    }
+    if (!msg.prefix) return
     msg.content = msg.content.replace(/<@!/g, '<@')
-    msg.prefix = prefix.toLowerCase() || this.prefix.toLowerCase()
-    const args = msg.content.substring(msg.prefix.length).split(' ')
+    const args = msg.content.slice(msg.prefix.length).trim().split(/ +/)
     const label = args.shift().toLowerCase()
     const command = await this.getCommand(label)
     if (!command) return
@@ -152,22 +174,22 @@ class CommandHandler {
     if (process.env.NODE_ENV !== 'development' && command.devOnly && msg.author.id !== this.client.config.ownerID) return this.client.embeds.embed(msg, `<@${msg.author.id}>, **Currently Unavailable:** The bot is currently unavailable.`)
     if (command.userPermissions) {
       if (typeof command.userPermissions === 'function') {
-        let missing = await command.userPermissions(msg)
+        const missing = await command.userPermissions(msg)
         if (missing != null) {
-          this.quartz.emit('missingPermission', { msg, command, missing })
+          this.quartz.emit('missingPermission', msg, command, missing)
           return
         }
       } else if (msg.channel.guild) {
-        let perm = msg.member.permission.has(command.userPermissions)
+        const perm = msg.member.permission.has(command.userPermissions)
         if (!perm) {
-          this.quartz.emit('missingPermission', { msg, command, missing: command.userPermissions })
+          this.quartz.emit('missingPermission', msg, command, command.userPermissions)
           return
         }
       }
     }
     await command.run(msg, args)
       .then(() => {
-        this.quartz.emit('commandRun', { msg, command })
+        this.quartz.emit('commandRun', msg, command)
       })
       .catch(error => {
         throw new QuartzError('UNKNOWN', error)
