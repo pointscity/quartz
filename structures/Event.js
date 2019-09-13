@@ -11,9 +11,11 @@ class Event extends Base {
     this.name = name
     this._client = client
   }
+
   get client () {
     return this._client
   }
+
   run () {
     throw new QuartzError('NOT_IMPLEMENTED', this.constructor.name, 'run')
   }

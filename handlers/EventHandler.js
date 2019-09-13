@@ -2,6 +2,7 @@ const QuartzError = require('../util/QuartzError')
 const { sep, resolve } = require('path')
 const { readdirSync } = require('fs')
 const { Collection } = require('eris')
+const quartzEvents = ['missingPermission', 'commandRun']
 
 class EventHandler {
   constructor (quartz, options = {}) {
@@ -30,7 +31,8 @@ class EventHandler {
       if (this.events.get(evt.name)) throw new QuartzError('EVT_ALREADY_EXISTS', evt.name)
       this.events.set(evt.name, evt)
       if (this.debug) this.quartz.logger.info(`Loading event ${evt.name}`)
-      if (evt.name === 'messageCreate') this.client.on(evt.name, this._onMessageCreate.bind(this))
+      if (quartzEvents.includes(evt.name)) this.quartz.on(evt.name, evt.run.bind(this))
+      else if (evt.name === 'messageCreate') this.client.on(evt.name, this._onMessageCreate.bind(this))
       else this.client.on(evt.name, evt.run.bind(this))
     })
   }
@@ -39,8 +41,17 @@ class EventHandler {
     if (!msg.author || msg.author.bot) return
     msg.command = false
     const prefix = await this.client.commandHandler.prefix(msg)
-    const lowerCaseMessage = msg.content.toLowerCase()
-    if (lowerCaseMessage.startsWith(prefix.toLowerCase())) msg.prefix = prefix.toLowerCase()
+    const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    if (Array.isArray(prefix)) {
+      const matchedPrefix = await this.client.commandHandler._resolvePrefix(prefix, msg)
+      msg.prefix = matchedPrefix
+    } else {
+      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(prefix.toLowerCase())})\\s*`)
+      if (!prefixRegex.test(msg.content.toLowerCase())) return
+      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
+      if (!matchedPrefix) return
+      msg.prefix = matchedPrefix
+    }
     msg.content = msg.content.replace(/<@!/g, '<@')
     if (msg.prefix) {
       const args = msg.content.substring(msg.prefix.length).split(' ')
