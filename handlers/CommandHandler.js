@@ -184,7 +184,7 @@ class CommandHandler {
         this.quartz.emit('commandRun', msg, command)
       })
       .catch(error => {
-        throw new Error(error)
+        this.quartz.logger.error(error)
       })
   }
 }
