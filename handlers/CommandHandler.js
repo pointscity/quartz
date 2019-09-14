@@ -130,30 +130,22 @@ class CommandHandler {
     return this.channel.createMessage({ embed: embed })
   }
 
-  async _resolvePrefix (prefixes, msg) {
-    let resolvedPrefix
-    await prefixes.forEach(p => {
-      const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(p.toLowerCase())})\\s*`)
-      if (!prefixRegex.test(msg.content.toLowerCase())) return undefined
-      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
-      if (!matchedPrefix) return undefined
-      resolvedPrefix = matchedPrefix
-    })
-    return resolvedPrefix
-  }
-
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot) return
     const prefix = await this.prefix(msg)
     const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const content = msg.content.toLowerCase()
     if (Array.isArray(prefix)) {
-      const matchedPrefix = await this._resolvePrefix(prefix, msg)
+      prefix.forEach(p => escapeRegex(p))
+      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${prefix.join('|')})\\s*`)
+      if (!prefixRegex.test(content)) return undefined
+      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
+      if (!matchedPrefix) return undefined
       msg.prefix = matchedPrefix
     } else {
       const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(prefix.toLowerCase())})\\s*`)
-      if (!prefixRegex.test(msg.content.toLowerCase())) return
-      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
+      if (!prefixRegex.test(content)) return
+      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
       if (!matchedPrefix) return
       msg.prefix = matchedPrefix
     }

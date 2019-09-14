@@ -42,13 +42,19 @@ class EventHandler {
     msg.command = false
     const prefix = await this.client.commandHandler.prefix(msg)
     const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const content = msg.content.toLowerCase()
     if (Array.isArray(prefix)) {
-      const matchedPrefix = await this.client.commandHandler._resolvePrefix(prefix, msg)
+      prefix.forEach(p => escapeRegex(p))
+      const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${prefix.join('|')})\\s*`)
+      if (!prefixRegex.test(content)) return undefined
+      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
+      if (!matchedPrefix) return undefined
       msg.prefix = matchedPrefix
     } else {
+      const content = msg.content.toLowerCase()
       const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(prefix.toLowerCase())})\\s*`)
-      if (!prefixRegex.test(msg.content.toLowerCase())) return
-      const matchedPrefix = msg.content.match(prefixRegex) ? msg.content.match(prefixRegex)[0] : undefined
+      if (!prefixRegex.test(content)) return
+      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
       if (!matchedPrefix) return
       msg.prefix = matchedPrefix
     }
