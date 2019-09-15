@@ -46,17 +46,13 @@ class EventHandler {
     if (Array.isArray(prefix)) {
       prefix.forEach(p => escapeRegex(p))
       const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${prefix.join('|')})\\s*`)
-      if (!prefixRegex.test(content)) return undefined
-      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
-      if (!matchedPrefix) return undefined
-      msg.prefix = matchedPrefix
+      const matchedPrefix = prefixRegex.test(content) && content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
+      if (matchedPrefix) msg.prefix = matchedPrefix
     } else {
       const content = msg.content.toLowerCase()
       const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${escapeRegex(prefix.toLowerCase())})\\s*`)
-      if (!prefixRegex.test(content)) return
-      const matchedPrefix = content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
-      if (!matchedPrefix) return
-      msg.prefix = matchedPrefix
+      const matchedPrefix = prefixRegex.test(content) && content.match(prefixRegex) ? content.match(prefixRegex)[0] : undefined
+      if (matchedPrefix) msg.prefix = matchedPrefix
     }
     msg.content = msg.content.replace(/<@!/g, '<@')
     if (msg.prefix) {
