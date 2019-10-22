@@ -2,7 +2,7 @@ const QuartzError = require('../util/QuartzError')
 const { sep, resolve } = require('path')
 const { readdirSync } = require('fs')
 const { Collection } = require('eris')
-const quartzEvents = ['missingPermission', 'commandRun']
+const quartzEvents = ['missingPermission', 'commandRun', 'ratelimited']
 
 class EventHandler {
   constructor (quartz, options = {}) {

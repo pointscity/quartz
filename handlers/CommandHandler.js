@@ -14,6 +14,7 @@ class CommandHandler {
     this.commands = new Collection()
     this.modules = new Collection()
     this.aliases = new Collection()
+    this.cooldowns = new Collection()
     this._text = options.text || 'Quartz'
     this._logo = options.logo || ''
     this._color = options.color || 0xFFFFFF
@@ -160,10 +161,29 @@ class CommandHandler {
     msg.color = this.color.bind(this, msg)
     msg.logo = this.logo.bind(this, msg)
     msg.text = this.text.bind(this, msg)
+    if (msg.command.cooldown && msg.command.cooldown.expires && msg.command.cooldown.command) {
+      const checkCooldown = this.cooldowns.get(msg.author.id)
+      if (checkCooldown && checkCooldown.expires) {
+        if (new Date(checkCooldown.expires) < Date.now()) {
+          this.cooldowns.delete(msg.author.id)
+          this.cooldowns.set(msg.author.id, { expires: Date.now() + msg.command.cooldown.expires, notified: false, command: 1 })
+        } else if (!checkCooldown.notified && checkCooldown.command >= msg.command.cooldown.command) {
+          checkCooldown.notified = true
+          this.cooldowns.set(msg.author.id, checkCooldown)
+          return this.quartz.emit('ratelimited', msg, command, true, checkCooldown.expires)
+        } else if (checkCooldown.notified && checkCooldown.command >= msg.command.cooldown.command) {
+          return this.quartz.emit('ratelimited', msg, command, false, checkCooldown.expires)
+        } else {
+          this.cooldowns.set(msg.author.id, { expires: Date.now() + msg.command.cooldown.expires, notified: false, command: ++checkCooldown.command })
+        }
+      } else {
+        this.cooldowns.set(msg.author.id, { expires: Date.now() + msg.command.cooldown.expires, notified: false, command: 1 })
+      }
+    }
     if (command.guildOnly && !msg.channel.guild) return
     if (msg.channel.guild) msg.guild = msg.channel.guild
-    if (command.ownerOnly && msg.author.id !== this.client.config.ownerID) return
-    if (process.env.NODE_ENV !== 'development' && command.devOnly && msg.author.id !== this.client.config.ownerID) return this.client.embeds.embed(msg, `<@${msg.author.id}>, **Currently Unavailable:** The bot is currently unavailable.`)
+    if (command.ownerOnly && msg.author.id !== this.quartz.owner) return
+    if (process.env.NODE_ENV !== 'development' && command.devOnly && msg.author.id !== this.quartz.owner) return this.client.embeds.embed(msg, `<@${msg.author.id}>, **Currently Unavailable:** The bot is currently unavailable.`)
     if (command.userPermissions) {
       if (typeof command.userPermissions === 'function') {
         const missing = await command.userPermissions(msg)

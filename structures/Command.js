@@ -13,6 +13,10 @@ class Command extends Base {
       devOnly = false,
       premium = '',
       description = '',
+      cooldown = {
+        expires: null,
+        command: null
+      },
       userPermissions = this.userPermissions
     } = options
 
@@ -24,6 +28,7 @@ class Command extends Base {
     this.devOnly = Boolean(devOnly)
     this.premium = premium
     this.description = description
+    this.cooldown = cooldown
     this.userPermissions = typeof userPermissions === 'function' ? userPermissions.bind(this) : userPermissions
     this._client = client
   }
