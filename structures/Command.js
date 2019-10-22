@@ -14,8 +14,8 @@ class Command extends Base {
       premium = '',
       description = '',
       cooldown = {
-        expires: null,
-        command: null
+        expires: 5000,
+        command: 2
       },
       userPermissions = this.userPermissions
     } = options
