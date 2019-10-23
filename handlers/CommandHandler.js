@@ -15,6 +15,7 @@ class CommandHandler {
     this.modules = new Collection()
     this.aliases = new Collection()
     this.cooldowns = new Collection()
+    this._settings = options.settings || undefined
     this._text = options.text || 'Quartz'
     this._logo = options.logo || ''
     this._color = options.color || 0xFFFFFF
@@ -98,6 +99,11 @@ class CommandHandler {
     return cmd
   }
 
+  async settings (msg) {
+    if (typeof this._settings !== 'function') return this._settings
+    else return this._settings(msg)
+  }
+
   async text (msg) {
     if (typeof this._text !== 'function') return this._text
     else return this._text(msg)
@@ -158,6 +164,7 @@ class CommandHandler {
     if (!command) return
     msg.command = command
     msg.embed = this.embed.bind(msg)
+    msg.settings = this.settings.bind(this, msg)
     msg.color = this.color.bind(this, msg)
     msg.logo = this.logo.bind(this, msg)
     msg.text = this.text.bind(this, msg)
