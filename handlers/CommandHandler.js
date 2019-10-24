@@ -142,6 +142,16 @@ class CommandHandler {
     const prefix = await this.prefix(msg)
     const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const content = msg.content.toLowerCase()
+    if (msg.member) {
+      if (!msg.member.permission.has('readMessages')) return
+      if (!msg.member.permission.has('sendMessages')) return
+      if (!msg.member.permission.has('readMessageHistory')) return
+      if (!msg.member.permission.has('manageMessages')) return
+      if (!msg.member.permission.has('embedLinks')) return
+      if (!msg.member.permission.has('attachFiles')) return
+      if (!msg.member.permission.has('externalEmojis')) return
+      if (!msg.member.permission.has('addReactions')) return
+    }
     if (Array.isArray(prefix)) {
       prefix.forEach(p => escapeRegex(p))
       const prefixRegex = new RegExp(`^(<@!?${this.client.user.id}>|${prefix.join('|')})\\s*`)
