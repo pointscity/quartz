@@ -169,7 +169,7 @@ class CommandHandler {
     msg.logo = this.logo.bind(this, msg)
     msg.text = this.text.bind(this, msg)
     const botPermissions = msg.channel.permissionsOf(this.client.user.id)
-    if (!botPermissions.has('sendMessages')) return
+    if (!botPermissions.has('sendMessages') || !botPermissions.has('embedLinks')) return
     if (command.botPermissions) {
       if (typeof command.botPermissions === 'function') {
         const missing = await command.botPermissions(msg)
