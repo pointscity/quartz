@@ -179,9 +179,9 @@ class CommandHandler {
         }
       } else if (msg.channel.guild) {
         if (command.botPermissions instanceof Array) {
-          command.botPermissions.forEach(p => {
+          for (const p of command.botPermissions) {
             if (!botPermissions.has(p)) return msg.embed(`**Missing Permissions:** The bot needs the \`${p}\` permission to run the \`${command.name}\` command.`)
-          })
+          }
         } else {
           if (!botPermissions.has(command.botPermissions)) {
             this.quartz.emit('missingPermission', msg, command, command.botPermissions)
