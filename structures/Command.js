@@ -17,6 +17,7 @@ class Command extends Base {
         expires: 5000,
         command: 2
       },
+      botPermissions = this.botPermissions,
       userPermissions = this.userPermissions
     } = options
 
@@ -29,6 +30,7 @@ class Command extends Base {
     this.premium = premium
     this.description = description
     this.cooldown = cooldown
+    this.botPermissions = typeof botPermissions === 'function' ? botPermissions.bind(this) : botPermissions
     this.userPermissions = typeof userPermissions === 'function' ? userPermissions.bind(this) : userPermissions
     this._client = client
   }

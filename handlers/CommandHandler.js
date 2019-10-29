@@ -138,7 +138,7 @@ class CommandHandler {
   }
 
   async _onMessageCreate (msg) {
-    if (!msg.author || msg.author.bot) return
+    if (!msg.author || msg.author.bot || !msg.channel.guild) return
     const prefix = await this.prefix(msg)
     const escapeRegex = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const content = msg.content.toLowerCase()
@@ -168,17 +168,39 @@ class CommandHandler {
     msg.color = this.color.bind(this, msg)
     msg.logo = this.logo.bind(this, msg)
     msg.text = this.text.bind(this, msg)
-    if (msg.command.cooldown && msg.command.cooldown.expires && msg.command.cooldown.command) {
+    const botPermissions = msg.channel.permissionsOf(this.client.user.id)
+    if (!botPermissions.has('sendMessages')) return
+    if (command.botPermissions) {
+      if (typeof command.botPermissions === 'function') {
+        const missing = await command.botPermissions(msg)
+        if (missing != null) {
+          this.quartz.emit('missingPermission', msg, command, missing)
+          return
+        }
+      } else if (msg.channel.guild) {
+        if (command.botPermissions instanceof Array) {
+          command.botPermissions.forEach(p => {
+            if (!botPermissions.has(p)) return msg.embed(`**Missing Permissions:** The bot needs the \`${p}\` permission to run the \`${command.name}\` command.`)
+          })
+        } else {
+          if (!botPermissions.has(command.botPermissions)) {
+            this.quartz.emit('missingPermission', msg, command, command.botPermissions)
+            return
+          }
+        }
+      }
+    }
+    if (command.cooldown && command.cooldown.expires && command.cooldown.command) {
       const checkCooldown = this.cooldowns.get(msg.author.id)
       if (checkCooldown && checkCooldown.expires) {
         if (new Date(checkCooldown.expires) < Date.now()) {
           this.cooldowns.delete(msg.author.id)
-          this.cooldowns.set(msg.author.id, { expires: Date.now() + msg.command.cooldown.expires, notified: false, command: 1 })
+          this.cooldowns.set(msg.author.id, { expires: Date.now() + command.cooldown.expires, notified: false, command: 1 })
         } else if (!checkCooldown.notified && checkCooldown.command >= msg.command.cooldown.command) {
           checkCooldown.notified = true
           this.cooldowns.set(msg.author.id, checkCooldown)
           return this.quartz.emit('ratelimited', msg, command, true, checkCooldown.expires)
-        } else if (checkCooldown.notified && checkCooldown.command >= msg.command.cooldown.command) {
+        } else if (checkCooldown.notified && checkCooldown.command >= command.cooldown.command) {
           return this.quartz.emit('ratelimited', msg, command, false, checkCooldown.expires)
         } else {
           this.cooldowns.set(msg.author.id, { expires: Date.now() + msg.command.cooldown.expires, notified: false, command: ++checkCooldown.command })
