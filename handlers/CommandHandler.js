@@ -52,7 +52,6 @@ class CommandHandler {
       await files.forEach(async file => {
         const Command = require(resolve(`${this.directory}${sep}${module}${sep}${file}`))
         const cmd = new Command(this.client)
-        if (!cmd) throw new QuartzError('CMD_FILE_EMPTY', `${this.directory}${sep}${module}${sep}${file}`)
         if (!cmd.name) throw new QuartzError('CMD_MISSING_NAME', `${this.directory}${sep}${module}${sep}${file}`)
         if (this.commands.get(cmd.name.toLowerCase())) throw new QuartzError('CMD_ALREADY_EXISTS', cmd.name)
         await cmd.aliases.forEach(alias => {
