@@ -7,14 +7,14 @@ The heart of [Points](https://points.city)
 ## Setup
 
  1. Run `npm i https://github.com/pointscity/quartz.git` or `yarn add https://github.com/pointscity/quartz.git`
- 2. Install chalk, eris, and eventemitter3
+ 2. Then run `npm i eris chalk eventemitter3` or `yarn add eris chalk eventemitter3`
  4. Setup client and command handler
 
 ## Examples
 
 Client Example:
 
-```
+```js
 const { QuartzClient } = require('quartz')
 const { Client } = require('eris')
 const path = require('path')
@@ -36,7 +36,7 @@ client.start()
 
 Command Example:
 
-```
+```js
 const { Command } = require('quartz')
 
 class Ping extends Command {
@@ -59,7 +59,7 @@ module.exports = Ping
 
 Event Example:
 
-```
+```js
 const { Event } = require('quartz')
 
 class Ready extends Event {
