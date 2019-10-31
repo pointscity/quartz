@@ -2,7 +2,7 @@
 
 <h1 align="center"><strong>Quartz</strong></h1>
 
-The heart of [Points](https://points.city)
+<h4 align="center">The heart of [Points](https://points.city)</h4>
 
 ## Setup
 
