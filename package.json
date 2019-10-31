@@ -7,9 +7,11 @@
   "license": "MIT",
   "private": true,
   "repository": "https://github.com/pointscity/quartz",
-  "peerDependencies": {
+  "dependencies": {
     "chalk": "^2.4.2",
-    "eris": "^0.10.1",
     "eventemitter3": "^4.0.0"
+  },
+  "peerDependencies": {
+    "eris": "^0.10.1"
   }
 }
