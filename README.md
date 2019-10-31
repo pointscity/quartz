@@ -7,7 +7,7 @@
 ## Setup
 
  1. Run `npm i https://github.com/pointscity/quartz.git` or `yarn add https://github.com/pointscity/quartz.git`
- 2. Then run `npm i eris chalk eventemitter3` or `yarn add eris chalk eventemitter3`
+ 2. Then run `npm i eris` or `yarn add eris`
  4. Setup client and command handler
 
 ## Examples
