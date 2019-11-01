@@ -10,7 +10,7 @@ class QuartzClient extends EventEmitter {
     super()
     this._client = eris
     this.owner = options.owner
-    this.logger = LogHandler
+    this.logger = new LogHandler()
     this.eventHandler = new EventHandler(this, options.eventHandler)
     this.commandHandler = new CommandHandler(this, options.commandHandler)
     this._client.embed = () => new Embed()
