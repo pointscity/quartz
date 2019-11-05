@@ -4,7 +4,13 @@ const { readdirSync, statSync } = require('fs')
 const { join, sep, resolve } = require('path')
 const { Collection } = require('eris')
 
+/** CommandHandler Class */
 class CommandHandler {
+  /**
+   * Create the commandHandler
+   * @param {object} quartz - QuartzClient object
+   * @param {object} options - commandHandler options
+   */
   constructor (quartz, options = {}) {
     this._quartz = quartz
     this.directory = options.directory || './commands'
@@ -21,14 +27,27 @@ class CommandHandler {
     this._color = options.color || 0xFFFFFF
   }
 
+  /**
+   * Get the quartz client object
+   * @return {object} The quartz client object.
+   */
   get quartz () {
     return this._quartz
   }
 
+  /**
+   * Get the eris client object
+   * @return {object} The eris client object.
+   */
   get client () {
     return this._quartz.client
   }
 
+  /**
+   * Get the commands from module
+   * @param {string} module - The module folder.
+   * @return {array} The commands in module.
+   */
   async getCommands (module) {
     const files = await readdirSync(`${this.directory}${sep}${module}`).filter(f => f.endsWith('.js'))
     if (files.length <= 0) throw new QuartzError('NO_FILES_IN_FOLDER', `${this.directory}${sep}${module}`)
@@ -38,11 +57,18 @@ class CommandHandler {
     })
   }
 
+  /**
+   * Get the modules from the command folder
+   * @return {array} The modules in the command folder
+   */
   async loadModules () {
     const rd = await readdirSync(this.directory).filter(f => statSync(join(this.directory, f)).isDirectory())
     return rd
   }
 
+  /**
+   * Load the commands from the folder
+   */
   async loadCommands () {
     const modules = await this.loadModules()
     if (modules.length <= 0) throw new QuartzError('FOLDER_NOT_FOUND', this.directory)
@@ -65,6 +91,10 @@ class CommandHandler {
     })
   }
 
+  /**
+   * Reload command
+   * @param {string} commandName - The command name.
+   */
   async reloadCommand (commandName) {
     const cmd = this.commands.get(commandName.toLowerCase())
     if (!cmd) return undefined
@@ -87,6 +117,11 @@ class CommandHandler {
     if (cmd.aliases && cmd.aliases.length > 0) await cmd.aliases.forEach(alias => this.aliases.set(alias, cmd.name))
   }
 
+  /**
+   * Get command by name
+   * @param {string} commandName - The command name.
+   * @return {object} The commands object 
+   */
   getCommand (commandName) {
     if (!commandName) return undefined
     let cmd = this.commands.get(commandName)
@@ -98,31 +133,62 @@ class CommandHandler {
     return cmd
   }
 
+  /**
+   * Get server settings
+   * @param {object} msg - The message object
+   * @return {object} The settings object 
+   */
   async settings (msg) {
     if (typeof this._settings !== 'function') return this._settings
     else return this._settings(msg)
   }
 
+  /**
+   * Get footer text
+   * @param {object} msg - The message object
+   * @return {string} The footer text 
+   */
   async text (msg) {
     if (typeof this._text !== 'function') return this._text
     else return this._text(msg)
   }
 
+  /**
+   * Get footer logo
+   * @param {object} msg - The message object
+   * @return {string} The footer logo 
+   */
   async logo (msg) {
     if (typeof this._logo !== 'function') return this._logo
     else return this._logo(msg)
   }
 
+  /**
+   * Get footer color
+   * @param {object} msg - The message object
+   * @return {string} The footer color 
+   */
   async color (msg) {
     if (typeof this._color !== 'function') return this._color
     else return this._color(msg)
   }
 
+  /**
+   * Get prefix
+   * @param {object} msg - The message object
+   * @return {string} The prefix
+   */
   async prefix (msg) {
     if (typeof this._prefix !== 'function') return this._prefix
     else return this._prefix(msg)
   }
 
+  /**
+   * Return a embed
+   * @param {object} message - The message object
+   * @param {object} options - The embed options
+   * @return {object} The embed
+   */
   async embed (message, options = {}) {
     const embed = new Embed()
     if (options.reply && !options.bold) embed.description(`<@${this.author.id}>, ${message}`)
@@ -136,6 +202,10 @@ class CommandHandler {
     return this.channel.createMessage({ embed: embed })
   }
 
+  /**
+   * Runs commands
+   * @param {object} message - The message object
+   */
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot || !msg.channel.guild) return
     const prefix = await this.prefix(msg)

@@ -13,13 +13,12 @@
 ## Examples
 
 Client Example:
-
 ```js
 const { QuartzClient } = require('quartz')
 const { Client } = require('eris')
 const path = require('path')
 
-const eris = new Client(process.env.TOKEN)
+const eris = new Client('TOKEN')
 const client = new QuartzClient({
   owner: 'ownerID',
   eventHandler: {
@@ -29,13 +28,12 @@ const client = new QuartzClient({
     directory: path.resolve('./commands'),
     prefix: '!'
   }
-})
+}, eris)
 
 client.start()
 ```
 
 Command Example:
-
 ```js
 const { Command } = require('quartz')
 
@@ -58,7 +56,6 @@ module.exports = Ping
 ```
 
 Event Example:
-
 ```js
 const { Event } = require('quartz')
 
@@ -75,3 +72,6 @@ class Ready extends Event {
 }
 module.exports = Ping
 ```
+
+## API
+

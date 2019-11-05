@@ -4,7 +4,13 @@ const { readdirSync } = require('fs')
 const { Collection } = require('eris')
 const quartzEvents = ['missingPermission', 'commandRun', 'ratelimited']
 
+/** EventHandler Class */
 class EventHandler {
+  /**
+   * Create the eventHandler
+   * @param {object} quartz - QuartzClient object
+   * @param {object} options - eventHandler options
+   */
   constructor (quartz, options = {}) {
     this._quartz = quartz
     this.directory = options.directory
@@ -12,14 +18,25 @@ class EventHandler {
     this.events = new Collection()
   }
 
+  /**
+   * Get the quartz client object
+   * @return {object} The quartz client object.
+   */
   get quartz () {
     return this._quartz
   }
 
+  /**
+   * Get the eris client object
+   * @return {object} The eris client object.
+   */
   get client () {
     return this._quartz.client
   }
 
+  /**
+   * Load the events from the folder
+   */
   async loadEvents () {
     const files = await readdirSync(this.directory).filter(f => f.endsWith('.js'))
     if (files.length <= 0) throw new QuartzError('NO_FILES_IN_FOLDER', this.directory)
@@ -37,6 +54,10 @@ class EventHandler {
     })
   }
 
+  /**
+   * Runs event
+   * @param {object} msg - The message object
+   */
   async _onMessageCreate (msg) {
     if (!msg.author || msg.author.bot) return
     msg.command = false

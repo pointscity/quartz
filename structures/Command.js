@@ -1,7 +1,13 @@
 const QuartzError = require('../util/QuartzError')
 const Base = require('./Base')
 
+/** Command Class */
 class Command extends Base {
+  /**
+   * Create the eventHandler
+   * @param {object} client - Client object
+   * @param {object} options - Options object
+   */
   constructor (client, options = {}) {
     super(client, { module: options.module })
     const {
@@ -35,10 +41,17 @@ class Command extends Base {
     this._client = client
   }
 
+  /**
+   * Get the eris client object
+   * @return {object} The eris client object.
+   */
   get client () {
     return this._client
   }
 
+  /**
+   * Run when command called
+   */
   run () {
     throw new QuartzError('NOT_IMPLEMENTED', this.constructor.name, 'run')
   }
