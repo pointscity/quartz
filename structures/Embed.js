@@ -26,7 +26,7 @@ class Embed {
    * @param {string} color - A color
    */
   color (color) {
-    this.color = color
+    this.color = (color[0] === "#") ? parseInt(color.replace("#", ""), 16) : color
     return this
   }
 
