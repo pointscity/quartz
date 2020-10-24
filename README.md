@@ -70,7 +70,7 @@ class Ready extends Event {
     return console.log('Bot Ready!')
   }
 }
-module.exports = Ping
+module.exports = Ready
 ```
 
 ## API
