@@ -1,56 +1,49 @@
-import LogHandler from './handlers/LogHandler'
-import EventHandler from './handlers/EventHandler'
-import CommandHandler from './handlers/CommandHandler'
-import Embed from './structures/Embed'
 import Eris from 'eris'
+import CommandListener from './command/listener'
+import { CommandOptions, EventOptions, ClientOptions } from './types'
 
-import { ClientOptions } from './typings'
+class Client<P> extends Eris.Client {
+	_commands: {
+		[key: string]: CommandOptions<any, any, P>
+	} = {}
 
-/** QuartzClient Class */
-class Client extends Eris.Client {
-  /**
-   * Create the QuartzClient
-   * @param {object} options - QuartzClient options
-   * @param {object} eris - Eris options
-   */
-  _options: ClientOptions
-  owner: string | null
-  logger: LogHandler
-  eventHandler: EventHandler
-  commandHandler: CommandHandler
-  [name: string]: any
+	_events: {
+		[key: string]: EventOptions<any>
+	} = {}
+	quartzOptions: ClientOptions<P>
 
-  constructor (token: string | undefined = process.env.DISCORD_TOKEN, options: ClientOptions = {
-    owner: null,
-    eventHandler: null,
-    commandHandler: null
-  }) {
-    if (token === '') throw new TypeError('Discord Token required!')
-    super(token, options.eris)
-    this._options = options
-    this.owner = options.owner
-    this.logger = new LogHandler(options?.logger?.name || 'Quartz', options?.logger?.color)
-    this.eventHandler = new EventHandler(this, options.eventHandler)
-    this.commandHandler = new CommandHandler(this, options.commandHandler)
-  }
+	constructor(token: string, options: ClientOptions<P>) {
+		super(token, options)
+		this.quartzOptions = options
+	}
 
-  /**
-   * Start the bot
-   */
-  public async start (): Promise<void> {
-    // Load events using eventHandler
-    await this.eventHandler.loadEvents()
-    // Load commands using commandHandler
-    await this.commandHandler.loadCommands()
+	command<A, T extends object = {}>(options: CommandOptions<T, A, P>) {
+		this._commands[options.name] = options
+		options.aliases?.forEach((alias) => (this._commands[alias] = options))
+	}
 
-    // Bind messageCreate to commandHandler
-    this.on('messageCreate', this.eventHandler._onMessageCreate.bind(this.eventHandler))
+	event<C>(options: EventOptions<C>) {
+		this._events[options.name] = options
+	}
 
-    // Connect to discord using eris client
-    return this.connect().catch((error: Error) => {
-      throw new Error(`Unable to start: ${error.message}`)
-    })
-  }
+	async getMember(guildID: string, userID: string) {
+		const guild = this.guilds.get(guildID)
+		if (!guild) throw new Error('FetchError')
+
+		if (guild.members.has(userID)) {
+			return guild.members.get(userID)
+		}
+		if (this.options.restMode) {
+			return await guild.getRESTMember(userID)
+		}
+		throw new Error('restMode')
+	}
+
+	start() {
+		const commandListener = new CommandListener<P>(this)
+		this.on('messageCreate', (message) => commandListener.onMessage(message))
+		return super.connect()
+	}
 }
 
 export default Client

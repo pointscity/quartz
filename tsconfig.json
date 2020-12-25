@@ -1,18 +1,18 @@
 {
-  "compilerOptions": {
-    "target": "es2017",
-    "lib": ["esnext"],
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "noImplicitAny": true,
-    "esModuleInterop": true,
-    "sourceMap": true,
-    "outDir": "./lib",
-    "allowJs": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true
-  },
-  "include": [
-    "./src/**/*", "index.d.ts"
-  ]
+	"compilerOptions": {
+		"target": "es2017",
+		"lib": ["esnext"],
+		"moduleResolution": "node",
+		"module": "commonjs",
+		"noImplicitAny": true,
+		"esModuleInterop": true,
+		"strict": true,
+		"sourceMap": true,
+		"declaration": true,
+		"outDir": "./lib",
+		"allowJs": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true
+	},
+	"include": ["./src/**/*"]
 }

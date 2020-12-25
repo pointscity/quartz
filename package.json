@@ -1,34 +1,28 @@
 {
-  "name": "@points.city/quartz",
-  "version": "2.1.0",
-  "description": "The heart of Points",
-  "main": "lib/index",
-  "typings": "index.d.ts",
-  "author": "Adam <adam@atiktech.co>",
-  "license": "MIT",
-  "repository": "https://github.com/pointscity/quartz",
-  "scripts": {
-    "build": "tsc",
-    "lint": "eslint --ext .js,.ts ."
-  },
-  "dependencies": {
-    "chalk": "^4.1.0",
-    "fs-extra": "^9.0.1",
-    "source-map-support": "^0.5.16"
-  },
-  "peerDependencies": {
-    "eris": "^0.13.3"
-  },
-  "devDependencies": {
-    "@types/fs-extra": "^9.0.1",
-    "@types/node": "^14.11.2",
-    "@typescript-eslint/eslint-plugin": "^4.3.0",
-    "@typescript-eslint/parser": "^4.3.0",
-    "eris": "^0.13.3",
-    "eslint": "^7.10.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "typescript": "^4.0.3"
-  }
+	"name": "@points.city/quartz",
+	"version": "3.0.0",
+	"description": "The heart of Points",
+	"main": "lib/index.js",
+	"typings": "lib/index.d.ts",
+	"author": "Adam <adam@atiktech.co>",
+	"license": "MIT",
+	"repository": "https://github.com/pointscity/quartz",
+	"scripts": {
+		"build": "tsc",
+		"prepublish": "tsc"
+	},
+	"peerDependencies": {
+		"eris": "^0.14.0"
+	},
+	"devDependencies": {
+		"@types/node": "^14.14.10",
+		"eris": "^0.14.0",
+		"typescript": "^4.1.2"
+	},
+	"files": [
+		"lib/*"
+	],
+	"dependencies": {
+		"split-string": "^6.1.0"
+	}
 }
