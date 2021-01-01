@@ -1,12 +1,12 @@
-import Eris from 'eris'
+import Eris, { Permission } from 'eris'
 import Client from '../client'
-import { Args, ArgType } from '../types'
+import { Args, ArgType, CommandOptions } from '../types'
 import split from 'split-string'
 
-class CommandListener<P> {
-	client: Client<P>
+class CommandListener {
+	client: Client
 
-	constructor(client: Client<P>) {
+	constructor(client: Client) {
 		this.client = client
 	}
 
@@ -186,6 +186,70 @@ class CommandListener<P> {
 		)
 	}
 
+	async checkPermissions({
+		command,
+		message,
+		channelPermissions
+	}: {
+		command: CommandOptions<any, any>
+		message: Eris.Message
+		channelPermissions: Permission
+	}) {
+		if (command.permissions?.bot) {
+			if (
+				Array.isArray(command.permissions.bot) &&
+				(message.channel.type === 0 || message.channel.type === 5)
+			) {
+				try {
+					const bot = message.channel.guild.members.has(this.client.user.id)
+						? message.channel.guild.members.get(this.client.user.id)
+						: await message.channel.guild.getRESTMember(this.client.user.id)
+					if (!bot) return false
+					const hasPermission = command.permissions.bot.some(
+						(permission) =>
+							bot.permissions.has(permission) ||
+							channelPermissions.has(permission)
+					)
+					if (!hasPermission) {
+						return false
+					}
+				} catch {
+					throw new Error('Unable to fetch bot member for permissions')
+				}
+			}
+		}
+
+		if (command.permissions?.user) {
+			if (
+				Array.isArray(command.permissions.user) &&
+				(message.channel.type === 0 || message.channel.type === 5)
+			) {
+				try {
+					const user = message.member
+						? message.member
+						: await message.channel.guild.getRESTMember(message.author.id)
+					if (!user) return false
+					const hasPermission = command.permissions.user.some(
+						(permission) =>
+							user.permissions.has(permission) ||
+							channelPermissions.has(permission)
+					)
+					if (!hasPermission) {
+						return false
+					}
+				} catch {
+					throw new Error('Unable to fetch member for permissions')
+				}
+			} else if (
+				typeof command.permissions.user === 'function' &&
+				(await command.permissions.user(message)) !== true
+			)
+				return false
+		}
+
+		return true
+	}
+
 	async onMessage(message: Eris.Message) {
 		if (message.author.bot) return
 
@@ -211,7 +275,26 @@ class CommandListener<P> {
 		const label = rawArgs[0]
 
 		const command = this.client._commands[label]
-		if (!(command && command.channel.includes(message.channel.type))) return
+		if (!(command && command.channel?.includes(message.channel.type))) return
+
+		if (message.channel.type === 0 || message.channel.type === 5) {
+			const channelPermissions: Permission = message.channel.permissionsOf(
+				this.client.user.id
+			)
+			if (!channelPermissions.has('sendMessages')) return
+			if (!channelPermissions.has('embedLinks'))
+				return await message.channel.createMessage(
+					`${message.author.mention}, \`Embed Links\` is required for the bot to work!`
+				)
+			if (
+				!(await this.checkPermissions({
+					message,
+					command,
+					channelPermissions
+				}))
+			)
+				return
+		}
 
 		if (command.beforeRun) {
 			command.run({

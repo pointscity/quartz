@@ -19,18 +19,17 @@ export interface Arg {
 
 export type Args = Arg[]
 
-export interface CommandOptions<T extends object, A, P> {
+export interface CommandOptions<T extends object, A> {
 	name: string
 	aliases?: string[]
 	category: string
 	description?: string
 	args?: Args
-	permissions: {
-		// TODO
-		user: P
-		bot: Permissions[]
+	permissions?: {
+		user?: (msg: Eris.Message) => boolean | Permissions[]
+		bot?: Permissions[]
 	}
-	channel: ChannelTypes[]
+	channel?: ChannelTypes[]
 	beforeRun?: (context: { message: Eris.Message }) => T
 	run: (context: { message: Eris.Message; args: A } & T) => void
 }
@@ -40,7 +39,7 @@ export interface EventOptions<C> {
 	run: (context: C) => void
 }
 
-export interface ClientOptions<P> extends Eris.ClientOptions {
+export interface ClientOptions extends Eris.ClientOptions {
 	prefix: string | ((msg: Eris.Message) => string | Promise<string>)
 	owners: string[]
 	cooldown?: {
@@ -48,5 +47,4 @@ export interface ClientOptions<P> extends Eris.ClientOptions {
 		amount?: number
 		time?: number
 	}
-	determinePermissions: () => P[]
 }

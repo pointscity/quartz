@@ -2,22 +2,22 @@ import Eris from 'eris'
 import CommandListener from './command/listener'
 import { CommandOptions, EventOptions, ClientOptions } from './types'
 
-class Client<P> extends Eris.Client {
+class Client extends Eris.Client {
 	_commands: {
-		[key: string]: CommandOptions<any, any, P>
+		[key: string]: CommandOptions<any, any>
 	} = {}
 
 	_events: {
 		[key: string]: EventOptions<any>
 	} = {}
-	quartzOptions: ClientOptions<P>
+	quartzOptions: ClientOptions
 
-	constructor(token: string, options: ClientOptions<P>) {
+	constructor(token: string, options: ClientOptions) {
 		super(token, options)
 		this.quartzOptions = options
 	}
 
-	command<A, T extends object = {}>(options: CommandOptions<T, A, P>) {
+	command<A, T extends object = {}>(options: CommandOptions<T, A>) {
 		this._commands[options.name] = options
 		options.aliases?.forEach((alias) => (this._commands[alias] = options))
 	}
@@ -40,7 +40,7 @@ class Client<P> extends Eris.Client {
 	}
 
 	start() {
-		const commandListener = new CommandListener<P>(this)
+		const commandListener = new CommandListener(this)
 		this.on('messageCreate', (message) => commandListener.onMessage(message))
 		return super.connect()
 	}
