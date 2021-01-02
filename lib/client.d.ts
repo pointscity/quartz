@@ -12,6 +12,6 @@ declare class Client extends Eris.Client {
     command<A, T extends object = {}>(options: CommandOptions<T, A>): void;
     event<C>(options: EventOptions<C>): void;
     getMember(guildID: string, userID: string): Promise<Eris.Member | undefined>;
-    start(): Promise<void>;
+    connect(): Promise<void>;
 }
 export default Client;

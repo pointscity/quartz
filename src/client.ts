@@ -39,7 +39,7 @@ class Client extends Eris.Client {
 		throw new Error('restMode')
 	}
 
-	start() {
+	connect() {
 		const commandListener = new CommandListener(this)
 		this.on('messageCreate', (message) => commandListener.onMessage(message))
 		return super.connect()
