@@ -258,8 +258,7 @@ class CommandListener {
 				? await this.client.quartzOptions.prefix(message)
 				: this.client.quartzOptions.prefix
 
-		if (typeof this.client.quartzOptions.prefix)
-			if (!message.content.startsWith(prefix)) return
+		if (!message.content.startsWith(prefix)) return
 		message.prefix = prefix
 		const content = message.content
 			.substring(this.client.quartzOptions.prefix.length)
