@@ -139,6 +139,10 @@ class Interaction {
     )
   }
 
+  public get guildID() {
+    return this._interaction.guild_id
+  }
+
   public get type() {
     return this._interaction.type
   }
