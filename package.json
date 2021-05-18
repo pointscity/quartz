@@ -1,4 +1,5 @@
 {
+  "name": "@points.city/quartz",
   "dependencies": {
     "axios": "^0.21.1",
     "cat-loggr": "^1.1.0",
