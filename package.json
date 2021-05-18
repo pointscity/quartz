@@ -6,8 +6,13 @@
     "discord-api-types": "^0.18.1",
     "eris": "^0.15.1"
   },
-  "main": "src/index.ts",
-  "version": "3.0.2",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "typings": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "version": "3.0.3",
   "scripts": {
     "publish": "tsc",
     "dev": "nodemon"
