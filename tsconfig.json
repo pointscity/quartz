@@ -3,7 +3,6 @@
     "target": "es2017",
     "lib": ["esnext"],
     "moduleResolution": "node",
-    "isolatedModules": true,
     "module": "commonjs",
     "noImplicitAny": true,
     "esModuleInterop": true,
