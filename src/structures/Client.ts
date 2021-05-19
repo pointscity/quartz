@@ -1,16 +1,25 @@
-import { Client, ClientOptions } from 'eris'
 import Group from './Group'
 import {
-  GatewayInteractionCreateDispatchData,
   APIApplicationCommandInteractionDataOption,
   InteractionType,
   ApplicationCommandOptionType,
   APIApplicationCommandInteractionDataOptionWithValues,
   ApplicationCommandInteractionDataOptionSubCommandGroup,
-  APIApplicationCommand
+  APIApplicationCommand,
+  APIInteraction
 } from 'discord-api-types'
 import axios from 'axios'
 import Interaction from './Interaction'
+import fastify from 'fastify'
+import { IncomingHttpHeaders } from 'http'
+import nacl from 'tweetnacl'
+import CatLoggr from 'cat-loggr/ts'
+import fastifyRawBody from 'fastify-raw-body'
+import { InteractionResponseType } from 'discord-interactions'
+import fs from 'fs/promises'
+import path from 'path'
+
+const loggr = new CatLoggr()
 
 export const DiscordAPI = axios.create({
   baseURL: 'https://discord.com/api/v9',
@@ -28,7 +37,13 @@ export interface Command<T> {
   onRun: (interaction: Interaction, extensions: T) => Promise<void> | void
 }
 
-class PointsClient<E> extends Client {
+const server = fastify()
+
+class PointsClient<E> {
+  #token: string
+  #publicKey: string
+  #appID: string
+  #debug?: Boolean
   private groups: Record<string, Group<E>> = {}
   private commands: Record<string, Command<E>> = {}
   private extensions?: E
@@ -45,91 +60,179 @@ class PointsClient<E> extends Client {
     return command?.type === ApplicationCommandOptionType.SUB_COMMAND_GROUP
   }
 
-  constructor(token: string, options?: ClientOptions) {
-    super(token, options)
+  private validateRequest = async (
+    body: string,
+    headers:
+      | ({
+          'x-signature-ed25519': string
+          'x-signature-timestamp': string
+        } & Record<string | number, unknown>)
+      | IncomingHttpHeaders
+  ) => {
+    const signature = headers['x-signature-ed25519'] as string
+    const timestamp = headers['x-signature-timestamp'] as string
+    if (!signature || !timestamp) return false
 
-    this.on('rawWS', async (packet, id) => {
-      if (packet.op !== 0 || packet.t !== 'INTERACTION_CREATE') return
-      const interaction = new Interaction(
-        packet.d as GatewayInteractionCreateDispatchData,
-        id
-      )
-      switch (interaction.type) {
-        case InteractionType.Ping: {
-          await interaction.ping()
-        }
-        case InteractionType.ApplicationCommand: {
-          if (!interaction.member) return
-          const availableExtensions =
-            typeof this.extensions === 'object'
-              ? Object.entries(this.extensions)
-              : []
+    const isVerified = nacl.sign.detached.verify(
+      Buffer.from(timestamp + body),
+      Buffer.from(signature, 'hex'),
+      Buffer.from(this.#publicKey, 'hex')
+    )
+    if (this.#debug) loggr.debug(`VERIFICATION: ${isVerified}`)
+    if (!isVerified) return false
+    return true
+  }
 
-          const extensionResults =
-            (await Promise.all(
-              availableExtensions.map(async ([name, onRun]) => {
-                const result = await onRun(interaction)
-                return [name, result]
-              })
-            )) ?? []
+  constructor({
+    token,
+    publicKey,
+    appID,
+    debug
+  }: {
+    token: string
+    publicKey: string
+    appID: string
+    debug?: boolean
+  }) {
+    this.#token = token
+    this.#publicKey = publicKey
+    this.#appID = appID
+    this.#debug = debug
+    server.register(fastifyRawBody, {
+      field: 'rawBody',
+      global: false,
+      encoding: 'utf8',
+      runFirst: true
+    })
+    server.route({
+      method: 'POST',
+      config: {
+        rawBody: true
+      },
+      url: '/api/interactions',
+      preHandler: async (req, res, next) => {
+        if (this.#debug)
+          loggr.debug('INCOMING REQUEST', JSON.stringify(req.body), req.headers)
+        const body = req.body as APIInteraction
+        if (
+          !(await this.validateRequest(JSON.stringify(req.body), req.headers))
+        )
+          return res.status(401).send('invalid request signature')
 
-          const extensions = extensionResults.reduce<Record<string, any>>(
-            function (result, item) {
-              const key = item[0]
-              if (typeof key !== 'string') return result
-              return {
-                ...result,
-                key: item[1]
+        if (body.type === InteractionType.Ping)
+          return res.send({ type: InteractionResponseType.PONG })
+        return next()
+      },
+      handler: async (req, res) => {
+        const interaction = new Interaction(req, res)
+        switch (interaction.type) {
+          case InteractionType.Ping: {
+            await interaction.ping()
+          }
+          case InteractionType.ApplicationCommand: {
+            if (!interaction.member) return
+            const availableExtensions =
+              typeof this.extensions === 'object'
+                ? Object.entries(this.extensions)
+                : []
+
+            const extensionResults =
+              (await Promise.all(
+                availableExtensions.map(async ([name, onRun]) => {
+                  const result = await onRun(interaction)
+                  return [name, result]
+                })
+              )) ?? []
+
+            const extensions = extensionResults.reduce<Record<string, any>>(
+              function (result, item) {
+                const key = item[0]
+                if (typeof key !== 'string') return result
+                return {
+                  ...result,
+                  key: item[1]
+                }
+              },
+              {}
+            )
+
+            if (!!this.groups[interaction.name]) {
+              const group = this.groups[interaction.name]
+              const commandOptions =
+                interaction.subcommands?.find(
+                  (cmd) => !!group.commands[cmd.name]
+                ) ??
+                interaction.subcommandGroups?.find(
+                  (g) => !!group.groups[g.name]
+                )
+
+              if (
+                this.isCommand(commandOptions) &&
+                group.commands[commandOptions.name]
+              ) {
+                await group.runCommand({
+                  name: commandOptions.name,
+                  interaction,
+                  extensions: extensions as E
+                })
+                return
+              } else if (
+                this.isSubCommandGroup(commandOptions) &&
+                group.groups[commandOptions.name]
+              ) {
+                const subcommandGroup = group.groups[commandOptions.name]
+                const subcommandOptions = commandOptions.options.find(
+                  (cmd) => !!subcommandGroup.commands[cmd.name]
+                )
+                if (!subcommandOptions) return
+                await subcommandGroup.runCommand({
+                  name: subcommandOptions.name,
+                  interaction,
+                  extensions: extensions as E
+                })
+                return
+              } else {
+                return
               }
-            },
-            {}
-          )
-
-          if (!!this.groups[interaction.name]) {
-            const group = this.groups[interaction.name]
-            const commandOptions =
-              interaction.subcommands?.find(
-                (cmd) => !!group.commands[cmd.name]
-              ) ??
-              interaction.subcommandGroups?.find((g) => !!group.groups[g.name])
-
-            if (
-              this.isCommand(commandOptions) &&
-              group.commands[commandOptions.name]
-            ) {
-              await group.runCommand({
-                name: commandOptions.name,
+            } else if (!!this.commands[interaction.name]) {
+              if (!interaction.member) return
+              await this.commands[interaction.name].onRun(
                 interaction,
-                extensions: extensions as E
-              })
-              return
-            } else if (
-              this.isSubCommandGroup(commandOptions) &&
-              group.groups[commandOptions.name]
-            ) {
-              const subcommandGroup = group.groups[commandOptions.name]
-              const subcommandOptions = commandOptions.options.find(
-                (cmd) => !!subcommandGroup.commands[cmd.name]
+                // @ts-ignore
+                extensions
               )
-              if (!subcommandOptions) return
-              await subcommandGroup.runCommand({
-                name: subcommandOptions.name,
-                interaction,
-                extensions: extensions as E
-              })
-              return
             } else {
               return
             }
-          } else if (!!this.commands[interaction.name]) {
-            if (!interaction.member) return
-            // @ts-ignore
-            await this.commands[interaction.name].onRun(interaction, extensions)
-          } else {
-            return
           }
         }
       }
+    })
+  }
+
+  private async _loadDirectory(dir: string) {
+    const directory = path.join(dir)
+    if ((await fs.stat(directory)).isDirectory()) {
+      const subfiles = await fs.readdir(directory)
+      subfiles.map(async (p) => {
+        const fp = path.join(directory, p)
+        if (!!(await fs.stat(fp)).isDirectory())
+          return await this._loadDirectory(fp)
+        if (this.#debug) loggr.log(`Loaded File: ${fp}`)
+        if (p.endsWith('.ts') || p.endsWith('.js'))
+          return await import(path.resolve(fp))
+      })
+    } else {
+      if (this.#debug) loggr.log(`Loaded File: ${directory}`)
+      if (directory.endsWith('.ts') || directory.endsWith('.js'))
+        await import(path.resolve(directory))
+    }
+  }
+
+  public async loadCommands(dir: string) {
+    const files = await fs.readdir(dir)
+    files.map(async (file) => {
+      await this._loadDirectory(path.join(dir, file))
     })
   }
 
@@ -155,17 +258,17 @@ class PointsClient<E> extends Client {
     this.extensions[name] = onRun
   }
 
-  public async connect(): Promise<void> {
+  public async connect(port: number): Promise<void> {
     const { data: commands } = await DiscordAPI.get<APIApplicationCommand[]>(
-      `/applications/${process.env.APP_ID}/commands`,
+      `/applications/${this.#appID}/commands`,
       {
         headers: {
-          Authorization: `Bot ${process.env.TOKEN}`
+          Authorization: `Bot ${this.#token}`
         }
       }
     )
     this.globalCommands = commands
-    return super.connect()
+    server.listen(port)
   }
 }
 

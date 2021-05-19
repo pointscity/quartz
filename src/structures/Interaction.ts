@@ -16,6 +16,7 @@ import {
 import User from './User'
 import { DiscordAPI } from './Client'
 import Member from './Member'
+import { FastifyReply, FastifyRequest } from 'fastify'
 
 const isSubCommand = (
   option: APIApplicationCommandInteractionDataOption
@@ -56,10 +57,14 @@ type CustomDataOption = {
 
 class Interaction {
   private readonly _interaction: APIApplicationCommandGuildInteraction
-
-  constructor(interaction: APIApplicationCommandInteraction, shardID: number) {
-    if (!isGuild(interaction)) throw new Error('Not a guild')
-    this._interaction = interaction
+  #req: FastifyRequest
+  #res: FastifyReply
+  constructor(req: FastifyRequest, res: FastifyReply) {
+    const body = req.body as APIApplicationCommandInteraction
+    if (!isGuild(body)) throw new Error('Not a guild')
+    this.#req = req
+    this.#res = res
+    this._interaction = body
     this.send = this.send.bind(this)
     this.edit = this.edit.bind(this)
     this.delete = this.delete.bind(this)
@@ -143,6 +148,10 @@ class Interaction {
     return this._interaction.guild_id
   }
 
+  public get channelID() {
+    return this._interaction.channel_id
+  }
+
   public get type() {
     return this._interaction.type
   }
@@ -170,32 +179,29 @@ class Interaction {
     content,
     allowedMentions,
     ephemeral,
-    components
+    components,
+    defer
   }: {
     embeds?: APIEmbed[]
     content?: string
     allowedMentions?: AllowedMentionsTypes
     ephemeral?: boolean
     components?: any[]
+    defer?: boolean
   }) {
     if (!embeds && !content) throw new Error('Embed or Content is required!')
-    try {
-      await DiscordAPI.post(
-        `/interactions/${this._interaction.id}/${this._interaction.token}/callback`,
-        {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: content,
-            embeds: embeds,
-            allowed_mentions: allowedMentions,
-            flags: ephemeral ? 64 : undefined,
-            components
-          }
-        }
-      )
-    } catch (error) {
-      console.log(error.response.data)
-    }
+    return this.#res.status(200).send({
+      type: defer
+        ? InteractionResponseType.DeferredChannelMessageWithSource
+        : InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content,
+        embeds,
+        allowed_mentions: allowedMentions,
+        flags: ephemeral ? 64 : undefined,
+        components
+      }
+    })
   }
 
   public async edit({
@@ -226,12 +232,9 @@ class Interaction {
   }
 
   public async ping() {
-    await DiscordAPI.post(
-      `/interactions/${this._interaction.id}/${this._interaction.token}/callback`,
-      {
-        type: InteractionResponseType.Pong
-      }
-    )
+    return this.#res.status(200).send({
+      type: InteractionResponseType.Pong
+    })
   }
 }
 
