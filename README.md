@@ -31,8 +31,6 @@ client.connect(Number(process.env.PORT!))
 Command Example:
 
 ```ts
-import { Command, CommandContext, Client } from 'quartz'
-
 client.command({
   name: 'ping',
   description: 'A command that responds pong',
