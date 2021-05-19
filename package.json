@@ -4,7 +4,10 @@
     "axios": "^0.21.1",
     "cat-loggr": "^1.1.0",
     "discord-api-types": "^0.18.1",
-    "eris": "^0.15.1"
+    "discord-interactions": "^2.0.2",
+    "fastify": "^3.15.1",
+    "fastify-raw-body": "^3.1.0",
+    "tweetnacl": "^1.0.3"
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -12,8 +15,10 @@
   "files": [
     "lib"
   ],
-  "version": "3.0.5",
+  "license": "MIT",
+  "version": "3.0.6",
   "scripts": {
+    "build": "tsc",
     "publish": "tsc",
     "dev": "nodemon"
   },
