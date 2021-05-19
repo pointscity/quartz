@@ -33,9 +33,6 @@ class Group<E> {
   }) {
     const command = this.commands[name]
     if (!command || !interaction.member) return
-
-    console.log(command.name)
-    console.log(interaction.arguments)
     await command.onRun(interaction, extensions)
   }
 

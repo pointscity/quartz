@@ -111,7 +111,6 @@ class Interaction {
             })
           return
         } else {
-          console.log(option)
           result.push({
             name: option.name,
             type: option.type,
