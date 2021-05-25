@@ -148,7 +148,7 @@ class Interaction<A> {
     return this._interaction.type
   }
 
-  public get arguments(): A {
+  public get args(): A {
     const args = this.findOptions(this._interaction.data.options ?? [], [])
     return args.reduce<any>(function(result, item, index) {
       result[item.name] = item.value

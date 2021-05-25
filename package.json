@@ -16,10 +16,10 @@
     "lib"
   ],
   "license": "MIT",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "scripts": {
     "build": "tsc",
-    "publish": "tsc",
+    "prepublish": "tsc",
     "dev": "nodemon"
   },
   "devDependencies": {
