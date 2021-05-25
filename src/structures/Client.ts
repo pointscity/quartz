@@ -28,26 +28,22 @@ export const DiscordAPI = axios.create({
   }
 })
 
-export interface Command<T> {
+export interface Command<A> {
   name: string
-  arguments?: {
-    name: string
-    type: ApplicationCommandOptionType
-  }[]
-  onRun: (interaction: Interaction, extensions: T) => Promise<void> | void
+  onRun: (interaction: Interaction<A>) => Promise<void> | void
 }
 
 const server = fastify()
 
-class PointsClient<E> {
+class PointsClient {
   #token: string
   #publicKey: string
   #appID: string
   #debug?: Boolean
-  private groups: Record<string, Group<E>> = {}
-  private commands: Record<string, Command<E>> = {}
-  private extensions?: E
+  private groups: Record<string, Group> = {}
+  private commands: Record<string, Command<any>> = {}
   globalCommands?: APIApplicationCommand[]
+
   private isCommand = (
     option?: APIApplicationCommandInteractionDataOption
   ): option is APIApplicationCommandInteractionDataOptionWithValues => {
@@ -131,31 +127,6 @@ class PointsClient<E> {
           }
           case InteractionType.ApplicationCommand: {
             if (!interaction.member) return
-            const availableExtensions =
-              typeof this.extensions === 'object'
-                ? Object.entries(this.extensions)
-                : []
-
-            const extensionResults =
-              (await Promise.all(
-                availableExtensions.map(async ([name, onRun]) => {
-                  const result = await onRun(interaction)
-                  return [name, result]
-                })
-              )) ?? []
-
-            const extensions = extensionResults.reduce<Record<string, any>>(
-              function (result, item) {
-                const key = item[0]
-                if (typeof key !== 'string') return result
-                return {
-                  ...result,
-                  key: item[1]
-                }
-              },
-              {}
-            )
-
             if (!!this.groups[interaction.name]) {
               const group = this.groups[interaction.name]
               const commandOptions =
@@ -172,8 +143,7 @@ class PointsClient<E> {
               ) {
                 await group.runCommand({
                   name: commandOptions.name,
-                  interaction,
-                  extensions: extensions as E
+                  interaction
                 })
                 return
               } else if (
@@ -187,8 +157,7 @@ class PointsClient<E> {
                 if (!subcommandOptions) return
                 await subcommandGroup.runCommand({
                   name: subcommandOptions.name,
-                  interaction,
-                  extensions: extensions as E
+                  interaction
                 })
                 return
               } else {
@@ -197,9 +166,7 @@ class PointsClient<E> {
             } else if (!!this.commands[interaction.name]) {
               if (!interaction.member) return
               await this.commands[interaction.name].onRun(
-                interaction,
-                // @ts-ignore
-                extensions
+                interaction
               )
             } else {
               return
@@ -236,26 +203,14 @@ class PointsClient<E> {
     })
   }
 
-  public command(command: Command<E>) {
+  public command<A>(command: Command<A>) {
     this.commands[command.name] = command
   }
 
   public group({ name }: { name: string }) {
-    const group = new Group<E>(name)
+    const group = new Group(name)
     this.groups[name] = group
     return group
-  }
-
-  public extension<T>({
-    name,
-    onRun
-  }: {
-    name: string
-    onRun: (interaction: Interaction) => T
-  }) {
-    if (!this.extensions) return
-    // @ts-ignore
-    this.extensions[name] = onRun
   }
 
   public async connect(port: number): Promise<void> {

@@ -1,43 +1,41 @@
 import { Command } from './Client'
 import Interaction from './Interaction'
 
-class Group<E> {
+class Group {
   name: string
-  private _groups: Record<string, Group<E>> = {}
-  private _commands: Record<string, Command<E>> = {}
+  private _groups: Record<string, Group> = {}
+  private _commands: Record<string, Command<any>> = {}
 
   constructor(name: string) {
     this.name = name
   }
 
-  get groups(): Record<string, Group<E>> {
+  get groups(): Record<string, Group> {
     return this._groups
   }
 
-  get commands(): Record<string, Command<E>> {
+  get commands(): Record<string, Command<any>> {
     return this._commands
   }
 
-  public command(command: Command<E>) {
+  public command<A>(command: Command<A>) {
     this._commands[command.name] = command
   }
 
   public async runCommand({
     name,
-    interaction,
-    extensions
+    interaction
   }: {
     name: string
-    interaction: Interaction
-    extensions: E
+    interaction: Interaction<any>
   }) {
     const command = this.commands[name]
     if (!command || !interaction.member) return
-    await command.onRun(interaction, extensions)
+    await command.onRun(interaction)
   }
 
   public group({ name }: { name: string }) {
-    const group = new Group<E>(name)
+    const group = new Group(name)
     this._groups[name] = group
     return group
   }

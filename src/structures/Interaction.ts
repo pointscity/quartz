@@ -30,12 +30,6 @@ const isSubCommandGroup = (
   return option.type === ApplicationCommandOptionType.SUB_COMMAND_GROUP
 }
 
-const isArgument = (
-  option: any
-): option is APIApplicationCommandInteractionDataOptionWithValues => {
-  return !!option?.value
-}
-
 const isGuild = (
   interaction: APIApplicationCommandInteraction & { guild_id?: string }
 ): interaction is APIApplicationCommandGuildInteraction => {
@@ -55,7 +49,7 @@ type CustomDataOption = {
     | `${bigint}`
 }
 
-class Interaction {
+class Interaction<A> {
   private readonly _interaction: APIApplicationCommandGuildInteraction
   #req: FastifyRequest
   #res: FastifyReply
@@ -68,7 +62,6 @@ class Interaction {
     this.send = this.send.bind(this)
     this.edit = this.edit.bind(this)
     this.delete = this.delete.bind(this)
-    this.getArgument = this.getArgument.bind(this)
     this.findOptions = this.findOptions.bind(this)
     this.ping = this.ping.bind(this)
   }
@@ -155,14 +148,12 @@ class Interaction {
     return this._interaction.type
   }
 
-  public get arguments() {
-    return this.findOptions(this._interaction.data.options ?? [], [])
-  }
-
-  public getArgument<F>(name: string, defaultValue?: F): F | undefined {
-    const foundArg = this.arguments.find((arg) => arg.name === name)
-    if (!foundArg || !isArgument(foundArg)) return defaultValue
-    return foundArg.value as any
+  public get arguments(): A {
+    const args = this.findOptions(this._interaction.data.options ?? [], [])
+    return args.reduce<any>(function(result, item, index) {
+      result[item.name] = item.value
+      return result
+    }, {})
   }
 
   public get member() {
