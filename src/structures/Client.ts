@@ -18,6 +18,7 @@ import fastifyRawBody from 'fastify-raw-body'
 import { InteractionResponseType } from 'discord-interactions'
 import fs from 'fs/promises'
 import path from 'path'
+import EventEmitter from 'events'
 
 const loggr = new CatLoggr()
 
@@ -35,7 +36,7 @@ export interface Command<A> {
 
 const server = fastify()
 
-class PointsClient {
+class PointsClient extends EventEmitter {
   #token: string
   #publicKey: string
   #appID: string
@@ -90,6 +91,7 @@ class PointsClient {
     appID: string
     debug?: boolean
   }) {
+    super()
     this.#token = token
     this.#publicKey = publicKey
     this.#appID = appID
@@ -165,12 +167,14 @@ class PointsClient {
               }
             } else if (!!this.commands[interaction.name]) {
               if (!interaction.member) return
-              await this.commands[interaction.name].onRun(
-                interaction
-              )
+              await this.commands[interaction.name].onRun(interaction)
             } else {
               return
             }
+          }
+          case 3: {
+            this.emit('buttonClicked', req.body)
+            return
           }
         }
       }
