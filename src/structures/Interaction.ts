@@ -3,7 +3,6 @@ import {
   APIApplicationCommandGuildInteraction,
   APIApplicationCommandInteraction,
   APIApplicationCommandInteractionDataOption,
-  APIApplicationCommandInteractionDataOptionWithValues,
   APIChannel,
   APIEmbed,
   APIMessage,
@@ -51,13 +50,13 @@ type CustomDataOption = {
 
 class Interaction<A> {
   private readonly _interaction: APIApplicationCommandGuildInteraction
-  #req: FastifyRequest
-  #res: FastifyReply
+  _req: FastifyRequest
+  _res: FastifyReply
   constructor(req: FastifyRequest, res: FastifyReply) {
     const body = req.body as APIApplicationCommandInteraction
     if (!isGuild(body)) throw new Error('Not a guild')
-    this.#req = req
-    this.#res = res
+    this._req = req
+    this._res = res
     this._interaction = body
     this.send = this.send.bind(this)
     this.edit = this.edit.bind(this)
@@ -150,7 +149,7 @@ class Interaction<A> {
 
   public get args(): A {
     const args = this.findOptions(this._interaction.data.options ?? [], [])
-    return args.reduce<any>(function(result, item, index) {
+    return args.reduce<any>(function (result, item, index) {
       result[item.name] = item.value
       return result
     }, {})
@@ -180,7 +179,7 @@ class Interaction<A> {
     defer?: boolean
   }) {
     if (!embeds && !content) throw new Error('Embed or Content is required!')
-    return this.#res.status(200).send({
+    return this._res.status(200).send({
       type: defer
         ? InteractionResponseType.DeferredChannelMessageWithSource
         : InteractionResponseType.ChannelMessageWithSource,
@@ -194,6 +193,29 @@ class Interaction<A> {
     })
   }
 
+  public async followup({
+    embeds,
+    content,
+    ephemeral,
+    allowedMentions
+  }: {
+    embeds?: APIEmbed[]
+    content?: string
+    ephemeral?: boolean
+    allowedMentions?: AllowedMentionsTypes
+  }) {
+    if (!embeds && !content) throw new Error('Embed or Content is required!')
+    await DiscordAPI.post(
+      `/webhooks/${this._interaction.id}/${this._interaction.token}`,
+      {
+        content,
+        embeds,
+        allowed_mentions: allowedMentions,
+        flags: ephemeral ? 64 : undefined
+      }
+    )
+  }
+
   public async edit({
     id = '@original',
     embeds,
@@ -205,7 +227,7 @@ class Interaction<A> {
   }) {
     if (!embeds && !content) throw new Error('Embed or Content is required!')
     return (
-      await DiscordAPI.post<APIMessage>(
+      await DiscordAPI.patch<APIMessage>(
         `/webhooks/${this._interaction.id}/${this._interaction.token}/messages/${id}`,
         {
           content: content,
@@ -222,7 +244,7 @@ class Interaction<A> {
   }
 
   public async ping() {
-    return this.#res.status(200).send({
+    return this._res.status(200).send({
       type: InteractionResponseType.Pong
     })
   }

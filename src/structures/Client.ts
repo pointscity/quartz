@@ -5,7 +5,6 @@ import {
   ApplicationCommandOptionType,
   APIApplicationCommandInteractionDataOptionWithValues,
   ApplicationCommandInteractionDataOptionSubCommandGroup,
-  APIApplicationCommand,
   APIInteraction
 } from 'discord-api-types'
 import axios from 'axios'
@@ -37,13 +36,10 @@ export interface Command<A> {
 const server = fastify()
 
 class PointsClient extends EventEmitter {
-  #token: string
   #publicKey: string
-  #appID: string
   #debug?: Boolean
   private groups: Record<string, Group> = {}
   private commands: Record<string, Command<any>> = {}
-  globalCommands?: APIApplicationCommand[]
 
   private isCommand = (
     option?: APIApplicationCommandInteractionDataOption
@@ -92,9 +88,7 @@ class PointsClient extends EventEmitter {
     debug?: boolean
   }) {
     super()
-    this.#token = token
     this.#publicKey = publicKey
-    this.#appID = appID
     this.#debug = debug
     server.register(fastifyRawBody, {
       field: 'rawBody',
@@ -173,8 +167,13 @@ class PointsClient extends EventEmitter {
             }
           }
           case 3: {
-            this.emit('buttonClicked', req.body)
-            return
+            if (this.listenerCount('buttonClicked') > 0) {
+              this.emit('buttonClicked', req.body, res)
+            } else {
+              return res.status(200).send({
+                type: 6
+              })
+            }
           }
         }
       }
@@ -218,16 +217,7 @@ class PointsClient extends EventEmitter {
   }
 
   public async connect(port: number): Promise<void> {
-    const { data: commands } = await DiscordAPI.get<APIApplicationCommand[]>(
-      `/applications/${this.#appID}/commands`,
-      {
-        headers: {
-          Authorization: `Bot ${this.#token}`
-        }
-      }
-    )
-    this.globalCommands = commands
-    server.listen(port)
+    await server.listen(port)
   }
 }
 
