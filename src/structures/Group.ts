@@ -3,11 +3,16 @@ import Interaction from './Interaction'
 
 class Group {
   name: string
+  onButtonClick?: (interaction: Interaction<any>) => Promise<void> | void
   private _groups: Record<string, Group> = {}
   private _commands: Record<string, Command<any>> = {}
 
-  constructor(name: string) {
+  constructor(
+    name: string,
+    onButtonClick?: (interaction: Interaction<any>) => Promise<void> | void
+  ) {
     this.name = name
+    this.onButtonClick = onButtonClick
   }
 
   get groups(): Record<string, Group> {

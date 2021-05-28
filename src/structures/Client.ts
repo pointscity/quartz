@@ -17,7 +17,6 @@ import fastifyRawBody from 'fastify-raw-body'
 import { InteractionResponseType } from 'discord-interactions'
 import fs from 'fs/promises'
 import path from 'path'
-import EventEmitter from 'events'
 
 const loggr = new CatLoggr()
 
@@ -160,7 +159,8 @@ class PointsClient {
             const buttonActions = (
               (interaction._req.body as { data: any }).data.custom_id ?? ''
             ).split(':')
-            const command = this.commands[buttonActions[0]]
+            const command =
+              this.commands[buttonActions[0]] ?? this.groups[buttonActions[0]]
             if (command && command.onButtonClick) {
               await command.onButtonClick(interaction)
             } else {
@@ -203,8 +203,14 @@ class PointsClient {
     this.commands[command.name] = command
   }
 
-  public group({ name }: { name: string }) {
-    const group = new Group(name)
+  public group({
+    name,
+    onButtonClick
+  }: {
+    name: string
+    onButtonClick?: (interaction: Interaction<any>) => Promise<void> | void
+  }) {
+    const group = new Group(name, onButtonClick)
     this.groups[name] = group
     return group
   }
