@@ -30,12 +30,13 @@ export const DiscordAPI = axios.create({
 
 export interface Command<A> {
   name: string
+  onButtonClick?: (interaction: Interaction<A>) => Promise<void> | void
   onRun: (interaction: Interaction<A>) => Promise<void> | void
 }
 
 const server = fastify()
 
-class PointsClient extends EventEmitter {
+class PointsClient {
   #publicKey: string
   #debug?: Boolean
   private groups: Record<string, Group> = {}
@@ -76,18 +77,7 @@ class PointsClient extends EventEmitter {
     return true
   }
 
-  constructor({
-    token,
-    publicKey,
-    appID,
-    debug
-  }: {
-    token: string
-    publicKey: string
-    appID: string
-    debug?: boolean
-  }) {
-    super()
+  constructor({ publicKey, debug }: { publicKey: string; debug?: boolean }) {
     this.#publicKey = publicKey
     this.#debug = debug
     server.register(fastifyRawBody, {
@@ -167,13 +157,16 @@ class PointsClient extends EventEmitter {
             }
           }
           case 3: {
-            if (this.listenerCount('buttonClicked') > 0) {
-              this.emit('buttonClicked', req.body, res)
+            const buttonActions = (
+              (interaction._req.body as { data: any }).data.custom_id ?? ''
+            ).split(':')
+            const command = this.commands[buttonActions[0]]
+            if (command && command.onButtonClick) {
+              await command.onButtonClick(interaction)
             } else {
-              return res.status(200).send({
-                type: 6
-              })
+              return res.status(200).send({ type: 6 })
             }
+            return
           }
         }
       }

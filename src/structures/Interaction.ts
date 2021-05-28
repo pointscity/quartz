@@ -16,6 +16,7 @@ import User from './User'
 import { DiscordAPI } from './Client'
 import Member from './Member'
 import { FastifyReply, FastifyRequest } from 'fastify'
+import ActionRow from './ActionRow'
 
 const isSubCommand = (
   option: APIApplicationCommandInteractionDataOption
@@ -175,7 +176,7 @@ class Interaction<A> {
     content?: string
     allowedMentions?: AllowedMentionsTypes
     ephemeral?: boolean
-    components?: any[]
+    components?: ActionRow[]
     defer?: boolean
   }) {
     if (!embeds && !content) throw new Error('Embed or Content is required!')
@@ -246,6 +247,29 @@ class Interaction<A> {
   public async ping() {
     return this._res.status(200).send({
       type: InteractionResponseType.Pong
+    })
+  }
+
+  public async update({
+    embeds,
+    content,
+    allowedMentions,
+
+    components
+  }: {
+    embeds?: APIEmbed[]
+    content?: string
+    allowedMentions?: AllowedMentionsTypes
+    components?: ActionRow[]
+  }) {
+    return this._res.status(200).send({
+      type: 7,
+      data: {
+        content,
+        embeds,
+        allowed_mentions: allowedMentions,
+        components
+      }
     })
   }
 }
