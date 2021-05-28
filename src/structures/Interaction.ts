@@ -103,6 +103,26 @@ class Interaction<A> {
               type: ApplicationCommandOptionType.CHANNEL
             })
           return
+        } else if (option.type === ApplicationCommandOptionType.MENTIONABLE) {
+          const user = this._interaction.data.resolved?.users?.[option.value]
+          if (user) {
+            const member =
+              this._interaction.data?.resolved?.members?.[option.value]
+            result.push({
+              name: option.name,
+              value: new User(user, member),
+              type: ApplicationCommandOptionType.MENTIONABLE
+            })
+          } else {
+            const role = this._interaction.data.resolved?.roles?.[option.value]
+            if (role)
+              return result.push({
+                name: option.name,
+                value: role,
+                type: ApplicationCommandOptionType.MENTIONABLE
+              })
+            return
+          }
         } else {
           result.push({
             name: option.name,
