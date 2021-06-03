@@ -197,6 +197,7 @@ class PointsClient {
     files.map(async (file) => {
       await this._loadDirectory(path.join(dir, file))
     })
+    loggr.init('LOADED COMMANDS')
   }
 
   public command<A>(command: Command<A>) {
