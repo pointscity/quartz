@@ -16,7 +16,7 @@
     "lib"
   ],
   "license": "MIT",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc",
