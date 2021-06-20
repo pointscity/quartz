@@ -91,7 +91,7 @@ class PointsClient {
         rawBody: true
       },
       url: '/api/interactions',
-      preHandler: async (req, res, next) => {
+      preHandler: async (req, res) => {
         if (this.#debug)
           loggr.debug('INCOMING REQUEST', JSON.stringify(req.body), req.headers)
         const body = req.body as APIInteraction
@@ -102,13 +102,13 @@ class PointsClient {
 
         if (body.type === InteractionType.Ping)
           return res.send({ type: InteractionResponseType.PONG })
-        return next()
       },
       handler: async (req, res) => {
         const interaction = new Interaction(req, res)
         switch (interaction.type) {
           case InteractionType.Ping: {
             await interaction.ping()
+            break
           }
           case InteractionType.ApplicationCommand: {
             if (!interaction.member) return
@@ -155,6 +155,7 @@ class PointsClient {
               return
             }
           }
+          // @ts-ignore
           case 3: {
             const buttonActions = (
               (interaction._req.body as { data: any }).data.custom_id ?? ''
@@ -217,6 +218,7 @@ class PointsClient {
   }
 
   public async connect(port: number): Promise<void> {
+    console.log('listen')
     await server.listen(port)
   }
 }
