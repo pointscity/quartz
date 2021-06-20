@@ -2,10 +2,10 @@
   "name": "@points.city/quartz",
   "dependencies": {
     "axios": "^0.21.1",
-    "cat-loggr": "^1.1.0",
+    "cat-loggr": "^1.2.2",
     "discord-api-types": "^0.18.1",
-    "discord-interactions": "^2.0.2",
-    "fastify": "^3.15.1",
+    "discord-interactions": "^2.3.0",
+    "fastify": "^3.18.0",
     "fastify-raw-body": "^3.1.0",
     "tweetnacl": "^1.0.3"
   },
@@ -16,17 +16,17 @@
     "lib"
   ],
   "license": "MIT",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc",
     "dev": "nodemon"
   },
   "devDependencies": {
-    "@types/node": "^14.14.37",
+    "@types/node": "^15.12.4",
     "nodemon": "^2.0.7",
-    "prettier": "^2.3.0",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.2.3"
+    "prettier": "^2.3.1",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.4"
   }
 }
