@@ -1,14 +1,8 @@
-import { APIGuildMember } from 'discord-api-types'
+import { APIInteractionGuildMember } from 'discord-api-types/v10'
 
 class Member {
-  #member: APIGuildMember & {
-    permissions: `${bigint}`
-  }
-  constructor(
-    member: APIGuildMember & {
-      permissions: `${bigint}`
-    }
-  ) {
+  #member: APIInteractionGuildMember
+  constructor(member: APIInteractionGuildMember) {
     this.#member = member
   }
 

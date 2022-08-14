@@ -1,12 +1,14 @@
 import {
-  APIGuildMember,
+  APIInteractionDataResolvedGuildMember,
+  APIInteractionGuildMember,
   APIUser,
+  Snowflake,
   UserFlags,
   UserPremiumType
-} from 'discord-api-types'
+} from 'discord-api-types/v10'
 
 export default class User implements APIUser {
-  id: `${bigint}`
+  id: Snowflake
   username: string
   discriminator: string
   avatar_hash: string | null
@@ -19,15 +21,11 @@ export default class User implements APIUser {
   flags?: UserFlags | undefined
   premium_type?: UserPremiumType | undefined
   public_flags?: UserFlags | undefined
-  member?: Omit<APIGuildMember, 'user' | 'deaf' | 'mute'> & {
-    permissions: `${bigint}`
-  }
+  member?: APIInteractionGuildMember | APIInteractionDataResolvedGuildMember
 
   constructor(
     user: APIUser,
-    member?: Omit<APIGuildMember, 'user' | 'deaf' | 'mute'> & {
-      permissions: `${bigint}`
-    }
+    member?: APIInteractionGuildMember | APIInteractionDataResolvedGuildMember
   ) {
     this.id = user.id
     this.username = user.username

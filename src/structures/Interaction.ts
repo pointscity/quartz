@@ -3,31 +3,32 @@ import {
   APIApplicationCommandGuildInteraction,
   APIApplicationCommandInteraction,
   APIApplicationCommandInteractionDataOption,
-  APIChannel,
   APIEmbed,
   APIMessage,
   APIRole,
-  ApplicationCommandInteractionDataOptionSubCommand,
-  ApplicationCommandInteractionDataOptionSubCommandGroup,
+  APIApplicationCommandInteractionDataSubcommandOption,
+  APIApplicationCommandInteractionDataSubcommandGroupOption,
   ApplicationCommandOptionType,
-  InteractionResponseType
-} from 'discord-api-types'
+  InteractionResponseType,
+  APIInteractionDataResolvedChannel,
+  APIGuildInteraction
+} from 'discord-api-types/v10'
 import User from './User'
-import { DiscordAPI } from './Client'
 import Member from './Member'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import ActionRow from './ActionRow'
+import { DiscordAPI } from '..'
 
 const isSubCommand = (
   option: APIApplicationCommandInteractionDataOption
-): option is ApplicationCommandInteractionDataOptionSubCommand => {
-  return option.type === ApplicationCommandOptionType.SUB_COMMAND
+): option is APIApplicationCommandInteractionDataSubcommandOption => {
+  return option.type === ApplicationCommandOptionType.Subcommand
 }
 
 const isSubCommandGroup = (
   option: APIApplicationCommandInteractionDataOption
-): option is ApplicationCommandInteractionDataOptionSubCommandGroup => {
-  return option.type === ApplicationCommandOptionType.SUB_COMMAND_GROUP
+): option is APIApplicationCommandInteractionDataSubcommandGroupOption => {
+  return option.type === ApplicationCommandOptionType.SubcommandGroup
 }
 
 const isGuild = (
@@ -42,7 +43,7 @@ type CustomDataOption = {
     | User
     | Member
     | APIRole
-    | APIChannel
+    | APIInteractionDataResolvedChannel
     | boolean
     | string
     | number
@@ -50,7 +51,7 @@ type CustomDataOption = {
 }
 
 class Interaction<A> {
-  private readonly _interaction: APIApplicationCommandGuildInteraction
+  private readonly _interaction: APIGuildInteraction
   _req: FastifyRequest
   _res: FastifyReply
   constructor(req: FastifyRequest, res: FastifyReply) {
@@ -73,7 +74,13 @@ class Interaction<A> {
     const nextOptions: APIApplicationCommandInteractionDataOption[] = []
     options.forEach((option) => {
       if (!isSubCommand(option) && !isSubCommandGroup(option)) {
-        if (option.type === ApplicationCommandOptionType.USER) {
+        if (
+          !('resolved' in this._interaction.data) ||
+          !this._interaction.data.resolved
+        )
+          return
+        if (option.type === ApplicationCommandOptionType.User) {
+          if (!('users' in this._interaction.data.resolved)) return
           const user = this._interaction.data.resolved?.users?.[option.value]
           const member =
             this._interaction.data?.resolved?.members?.[option.value]
@@ -81,29 +88,32 @@ class Interaction<A> {
             result.push({
               name: option.name,
               value: new User(user, member),
-              type: ApplicationCommandOptionType.USER
+              type: ApplicationCommandOptionType.User
             })
           return
-        } else if (option.type === ApplicationCommandOptionType.ROLE) {
+        } else if (option.type === ApplicationCommandOptionType.Role) {
+          if (!('roles' in this._interaction.data.resolved)) return
           const role = this._interaction.data.resolved?.roles?.[option.value]
           if (role)
             return result.push({
               name: option.name,
               value: role,
-              type: ApplicationCommandOptionType.ROLE
+              type: ApplicationCommandOptionType.Role
             })
           return
-        } else if (option.type === ApplicationCommandOptionType.CHANNEL) {
+        } else if (option.type === ApplicationCommandOptionType.Channel) {
+          if (!('channels' in this._interaction.data.resolved)) return
           const channel =
             this._interaction.data.resolved?.channels?.[option.value]
           if (channel)
             return result.push({
               name: option.name,
               value: channel,
-              type: ApplicationCommandOptionType.CHANNEL
+              type: ApplicationCommandOptionType.Channel
             })
           return
-        } else if (option.type === ApplicationCommandOptionType.MENTIONABLE) {
+        } else if (option.type === ApplicationCommandOptionType.Mentionable) {
+          if (!('users' in this._interaction.data.resolved)) return
           const user = this._interaction.data.resolved?.users?.[option.value]
           if (user) {
             const member =
@@ -111,15 +121,16 @@ class Interaction<A> {
             result.push({
               name: option.name,
               value: new User(user, member),
-              type: ApplicationCommandOptionType.MENTIONABLE
+              type: ApplicationCommandOptionType.Mentionable
             })
           } else {
+            if (!('roles' in this._interaction.data.resolved)) return
             const role = this._interaction.data.resolved?.roles?.[option.value]
             if (role)
               return result.push({
                 name: option.name,
                 value: role,
-                type: ApplicationCommandOptionType.MENTIONABLE
+                type: ApplicationCommandOptionType.Mentionable
               })
             return
           }
@@ -141,18 +152,22 @@ class Interaction<A> {
   }
 
   public get name() {
-    return this._interaction.data.name
+    return 'name' in this._interaction.data
+      ? this._interaction.data.name
+      : undefined
   }
 
   public get subcommands() {
+    if (!('options' in this._interaction.data)) return undefined
     return this._interaction.data.options?.filter(
-      (option) => option.type === ApplicationCommandOptionType.SUB_COMMAND
+      (option) => option.type === ApplicationCommandOptionType.Subcommand
     )
   }
 
   public get subcommandGroups() {
+    if (!('options' in this._interaction.data)) return undefined
     return this._interaction.data.options?.filter(
-      (option) => option.type === ApplicationCommandOptionType.SUB_COMMAND_GROUP
+      (option) => option.type === ApplicationCommandOptionType.SubcommandGroup
     )
   }
 
@@ -169,8 +184,9 @@ class Interaction<A> {
   }
 
   public get args(): A {
+    if (!('options' in this._interaction.data)) return {} as A
     const args = this.findOptions(this._interaction.data.options ?? [], [])
-    return args.reduce<any>(function (result, item, index) {
+    return args.reduce<any>(function (result, item) {
       result[item.name] = item.value
       return result
     }, {})

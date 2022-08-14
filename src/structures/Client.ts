@@ -3,11 +3,11 @@ import {
   APIApplicationCommandInteractionDataOption,
   InteractionType,
   ApplicationCommandOptionType,
-  APIApplicationCommandInteractionDataOptionWithValues,
-  ApplicationCommandInteractionDataOptionSubCommandGroup,
+  APIApplicationCommandInteractionDataSubcommandOption,
   APIInteraction,
-  InteractionResponseType
-} from 'discord-api-types'
+  InteractionResponseType,
+  APIApplicationCommandInteractionDataBasicOption
+} from 'discord-api-types/v10'
 import axios from 'axios'
 import Interaction from './Interaction'
 import fastify from 'fastify'
@@ -19,13 +19,6 @@ import fs from 'fs/promises'
 import path from 'path'
 
 const loggr = new CatLoggr()
-
-export const DiscordAPI = axios.create({
-  baseURL: 'https://discord.com/api/v10',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-})
 
 export interface Command<A> {
   name: string
@@ -43,14 +36,14 @@ class PointsClient {
 
   private isCommand = (
     option?: APIApplicationCommandInteractionDataOption
-  ): option is APIApplicationCommandInteractionDataOptionWithValues => {
-    return option?.type === ApplicationCommandOptionType.SUB_COMMAND
+  ): option is APIApplicationCommandInteractionDataBasicOption => {
+    return option?.type === ApplicationCommandOptionType.Subcommand
   }
 
   private isSubCommandGroup = (
     command?: APIApplicationCommandInteractionDataOption
-  ): command is ApplicationCommandInteractionDataOptionSubCommandGroup => {
-    return command?.type === ApplicationCommandOptionType.SUB_COMMAND_GROUP
+  ): command is APIApplicationCommandInteractionDataSubcommandOption => {
+    return command?.type === ApplicationCommandOptionType.SubcommandGroup
   }
 
   private validateRequest = async (
@@ -106,11 +99,8 @@ class PointsClient {
       handler: async (req, res) => {
         const interaction = new Interaction(req, res)
         switch (interaction.type) {
-          case InteractionType.Ping: {
-            await interaction.ping()
-            break
-          }
           case InteractionType.ApplicationCommand: {
+            if (!interaction.name) return
             if (!interaction.member) return
             if (!!this.groups[interaction.name]) {
               const group = this.groups[interaction.name]
@@ -136,7 +126,7 @@ class PointsClient {
                 group.groups[commandOptions.name]
               ) {
                 const subcommandGroup = group.groups[commandOptions.name]
-                const subcommandOptions = commandOptions.options.find(
+                const subcommandOptions = commandOptions.options?.find(
                   (cmd) => !!subcommandGroup.commands[cmd.name]
                 )
                 if (!subcommandOptions) return
@@ -155,8 +145,7 @@ class PointsClient {
               return
             }
           }
-          // @ts-ignore
-          case 3: {
+          case InteractionType.MessageComponent: {
             const buttonActions = (
               (interaction._req.body as { data: any }).data.custom_id ?? ''
             ).split(':')

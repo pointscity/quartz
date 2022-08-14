@@ -169,10 +169,10 @@ depd@2.0.0:
   resolved "https://registry.yarnpkg.com/depd/-/depd-2.0.0.tgz#b696163cc757560d09cf22cc8fad1571b79e76df"
   integrity sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==
 
-discord-api-types@^0.18.1:
-  version "0.18.1"
-  resolved "https://registry.yarnpkg.com/discord-api-types/-/discord-api-types-0.18.1.tgz#5d08ed1263236be9c21a22065d0e6b51f790f492"
-  integrity sha512-hNC38R9ZF4uaujaZQtQfm5CdQO58uhdkoHQAVvMfIL0LgOSZeW575W8H6upngQOuoxWd8tiRII3LLJm9zuQKYg==
+discord-api-types@^0.37.2:
+  version "0.37.2"
+  resolved "https://registry.yarnpkg.com/discord-api-types/-/discord-api-types-0.37.2.tgz#a192c0dfd048faf26ebbcd182745e7aaae489dac"
+  integrity sha512-JS4q0LGRxqY7TIsfORlIMzcmews+Qu3RmOWrxoEY+BR0g0sZlplEyY/Ltb3om6ZaBm+WNcAmAJxlsmAu4068Vw==
 
 escape-string-regexp@^1.0.5:
   version "1.0.5"
