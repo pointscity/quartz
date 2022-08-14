@@ -1,0 +1,34 @@
+name: Deploy Quartz Package
+on:
+  push:
+    branches:
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    name: 'Publish to GitHub Packages'
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+          registry-url: 'https://npm.pkg.github.com/'
+      - name: Install dependencies
+        run: yarn install
+      - name: Build the package
+        run: yarn build
+      - name: Setup git
+        run: |
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git config --global user.name "$GITHUB_ACTOR"
+          git remote add gh-origin https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Increment version
+        run: yarn version --patch
+      - name: Publish package to GitHub
+        run: yarn publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update repo with new version
+        run: git push gh-origin HEAD:main --tags

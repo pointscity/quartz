@@ -5,7 +5,8 @@ import {
   ApplicationCommandOptionType,
   APIApplicationCommandInteractionDataOptionWithValues,
   ApplicationCommandInteractionDataOptionSubCommandGroup,
-  APIInteraction
+  APIInteraction,
+  InteractionResponseType
 } from 'discord-api-types'
 import axios from 'axios'
 import Interaction from './Interaction'
@@ -14,14 +15,13 @@ import { IncomingHttpHeaders } from 'http'
 import nacl from 'tweetnacl'
 import CatLoggr from 'cat-loggr/ts'
 import fastifyRawBody from 'fastify-raw-body'
-import { InteractionResponseType } from 'discord-interactions'
 import fs from 'fs/promises'
 import path from 'path'
 
 const loggr = new CatLoggr()
 
 export const DiscordAPI = axios.create({
-  baseURL: 'https://discord.com/api/v9',
+  baseURL: 'https://discord.com/api/v10',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -101,7 +101,7 @@ class PointsClient {
           return res.status(401).send('invalid request signature')
 
         if (body.type === InteractionType.Ping)
-          return res.send({ type: InteractionResponseType.PONG })
+          return res.send({ type: InteractionResponseType.Pong })
       },
       handler: async (req, res) => {
         const interaction = new Interaction(req, res)
