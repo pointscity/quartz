@@ -74,12 +74,12 @@ class Interaction<A> {
     const nextOptions: APIApplicationCommandInteractionDataOption[] = []
     options.forEach((option) => {
       if (!isSubCommand(option) && !isSubCommandGroup(option)) {
-        if (
-          !('resolved' in this._interaction.data) ||
-          !this._interaction.data.resolved
-        )
-          return
         if (option.type === ApplicationCommandOptionType.User) {
+          if (
+            !('resolved' in this._interaction.data) ||
+            !this._interaction.data.resolved
+          )
+            return
           if (!('users' in this._interaction.data.resolved)) return
           const user = this._interaction.data.resolved?.users?.[option.value]
           const member =
@@ -92,6 +92,11 @@ class Interaction<A> {
             })
           return
         } else if (option.type === ApplicationCommandOptionType.Role) {
+          if (
+            !('resolved' in this._interaction.data) ||
+            !this._interaction.data.resolved
+          )
+            return
           if (!('roles' in this._interaction.data.resolved)) return
           const role = this._interaction.data.resolved?.roles?.[option.value]
           if (role)
@@ -102,6 +107,11 @@ class Interaction<A> {
             })
           return
         } else if (option.type === ApplicationCommandOptionType.Channel) {
+          if (
+            !('resolved' in this._interaction.data) ||
+            !this._interaction.data.resolved
+          )
+            return
           if (!('channels' in this._interaction.data.resolved)) return
           const channel =
             this._interaction.data.resolved?.channels?.[option.value]
@@ -113,6 +123,11 @@ class Interaction<A> {
             })
           return
         } else if (option.type === ApplicationCommandOptionType.Mentionable) {
+          if (
+            !('resolved' in this._interaction.data) ||
+            !this._interaction.data.resolved
+          )
+            return
           if (!('users' in this._interaction.data.resolved)) return
           const user = this._interaction.data.resolved?.users?.[option.value]
           if (user) {
