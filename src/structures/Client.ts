@@ -218,8 +218,9 @@ class PointsClient {
   }
 
   public async connect(port: number): Promise<void> {
-    console.log('listen')
-    await server.listen(port)
+    await server.listen({
+      port
+    })
   }
 }
 
